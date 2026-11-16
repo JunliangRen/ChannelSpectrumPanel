@@ -1,6 +1,6 @@
 # Channel Spectrum Mirror (x64)
 
-Experimental version: **0.4.0**. An independent reconstruction of a spectrum visualization panel for **64-bit foobar2000 2.x with Columns UI**. Full behavioral and pixel-level parity has not yet been established.
+Experimental version: **0.4.1**. An independent reconstruction of a spectrum visualization panel for **64-bit foobar2000 2.x with Columns UI**. Full behavioral and pixel-level parity has not yet been established.
 
 ## Original component and credit
 
@@ -14,9 +14,11 @@ Credit for the original component belongs to ssenna. This repository is **not an
 
 ## Installation
 
-Build the component using the instructions below. In foobar2000, select `dist/foo_uie_channel_spectrum_x64-0.4.0.fb2k-component` through **Preferences > Components > Install**, apply, and restart. Add **Visualisations > Channel Spectrum Mirror** to the Columns UI layout. Right-click the panel and select **Configure**.
+Build the component using the instructions below. In foobar2000, select `dist/foo_uie_channel_spectrum_x64-0.4.1.fb2k-component` through **Preferences > Components > Install**, apply, and restart. Add **Visualisations > Channel Spectrum Mirror** to the Columns UI layout. Right-click the panel and select **Configure**.
 
 Configurations from versions 0.1/0.2 of this reconstruction remain readable. Defaults retain mirrored left/right channels, bass at the center, gray-white gradient bars on black, and bright peak markers. The current configuration format is version 3; older component versions cannot read it. Only x64 Columns UI is supported. The corresponding x64 MSVC runtime is required.
+
+Version 0.4.1 fixes forced Left/Right combined with Reverse frequency. See the [direction regression record](analysis/DIRECTION-0.4.1.md).
 
 ## Features
 
@@ -34,7 +36,7 @@ The original disables peaks in Simple-line mode; this implementation intentional
 
 ## Validation and limitations
 
-The Release x64 build and 7,696 offline assertions passed. The count includes per-bar boundary checks, not 7,696 independent scenarios. Coverage includes configuration migration, field round trips, original preset fields and color byte order, legacy prefixes, channels, rotation, styles, peaks, padding, and buffer boundaries.
+The Release x64 build and 8,844 offline assertions passed. The count includes per-bar boundary checks, not 8,844 independent scenarios. Coverage includes configuration migration, field round trips, original preset fields and color byte order, legacy prefixes, channels, rotation, styles, peaks, padding, and buffer boundaries.
 
 Under a controlled x87/SSE emulation profile, 17,637 valid four-DWORD frequency descriptors matched across 13 fixtures. Eight amplitude ticks, speaker mapping, native GDI gradients and polylines, and short preset prefixes have also been implemented.
 

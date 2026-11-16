@@ -8,7 +8,7 @@
 #include "scanline.h"
 #include <uxtheme.h>
 
-DECLARE_COMPONENT_VERSION("Channel Spectrum Mirror", "0.4.0",
+DECLARE_COMPONENT_VERSION("Channel Spectrum Mirror", "0.4.1",
     "64-bit Columns UI stereo spectrum. Independent reconstruction inspired by Channel Spectrum panel 0.17.2.\n"
     "Mirrored channels, original amplitude curves and fixed-point falling peaks. Experimental first version.");
 VALIDATE_COMPONENT_FILENAME("foo_uie_channel_spectrum_x64.dll");

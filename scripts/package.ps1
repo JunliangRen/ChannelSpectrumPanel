@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
 $root = Split-Path $PSScriptRoot -Parent
-$out = Join-Path $root 'dist\foo_uie_channel_spectrum_x64-0.4.0.fb2k-component'
+$out = Join-Path $root 'dist\foo_uie_channel_spectrum_x64-0.4.1.fb2k-component'
 $dll = Join-Path $root 'dist\foo_uie_channel_spectrum_x64.dll'
 if (!(Test-Path -LiteralPath $dll)) { throw 'Build the DLL before packaging.' }
 $zip = [IO.Compression.ZipArchive]::new([IO.File]::Open($out,[IO.FileMode]::Create),[IO.Compression.ZipArchiveMode]::Create)
@@ -9,6 +9,7 @@ try {
     $files = @{
         'x64/foo_uie_channel_spectrum_x64.dll' = $dll
         'analysis/RESTORATION-0.4.md' = (Join-Path $root 'analysis/RESTORATION-0.4.md')
+        'analysis/DIRECTION-0.4.1.md' = (Join-Path $root 'analysis/DIRECTION-0.4.1.md')
         'analysis/PARITY.md' = (Join-Path $root 'analysis/PARITY.md')
         'analysis/evidence/csp-field-order.tsv' = (Join-Path $root 'analysis/evidence/csp-field-order.tsv')
         'README.md' = (Join-Path $root 'README.md')

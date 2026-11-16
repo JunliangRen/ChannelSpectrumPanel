@@ -48,9 +48,11 @@ struct Settings {
     unsigned effective_width() const { return style==Style::SimpleLine || style==Style::SeparateLines ? 1 : width; }
     unsigned pitch() const { return style==Style::SimpleLine ? 2 : effective_width()+ (style==Style::SeparateLines ? std::max(1u,spacing) : spacing)+(segmented && style!=Style::SimpleLine ? 1 : 0); }
 };
-// Forced directions override Reverse. VA 1000384B flips Mirror for a single display.
+// Caller VA 100035FC..1000361C swaps forced directions on Reverse.
+// VA 1000384B flips Mirror for a single display; forced directions bypass that flip.
 inline bool frequency_increasing(unsigned side,unsigned displays,const Settings& s) {
-    return s.direction ? s.direction==1 : bool((side&1) ^ s.reverse_frequency ^ (displays==1));
+    return s.direction ? ((s.direction==1) != s.reverse_frequency)
+                       : bool((side&1) ^ s.reverse_frequency ^ (displays==1));
 }
 // Static-analysis VA 100041DD..10004546. Host FFT flags must match this mode.
 inline double amplitude(double a, unsigned bins, const Settings& s) {

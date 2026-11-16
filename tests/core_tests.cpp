@@ -195,11 +195,35 @@ int main(int argc,char** argv) {
     s={};s.amplitude_ticks=true;s.new_fft=true;s.long_amplitude=100;
     data.assign(2048,0);engine.update(data,1024,2,0,1,800,200,0,s);
     check(engine.ticks().size()==10,"seven visible new-mode tick levels; full lines once and short ticks on both sides");
-    s={};s.reverse_frequency=true;s.direction=1;
-    check(csp::frequency_increasing(0,2,s),"forced right overrides reverse");
-    s.direction=2;check(!csp::frequency_increasing(1,2,s),"forced left overrides reverse");
-    s={};check(csp::frequency_increasing(0,1,s),"single display defaults low frequencies on left");
-    s.reverse_frequency=true;check(!csp::frequency_increasing(0,1,s),"single display reverse");
+    // End-to-end direction checks: caller preprocessing -> descriptors -> emitted bars.
+    // Original caller VA 100035FC..1000361C swaps forced Left/Right on Reverse.
+    // Rows: Mirror, Right, Left. Columns: reverse off/on; values are low-to-high direction.
+    constexpr bool stereoDirections[3][2][2]={{{false,true},{true,false}},{{true,true},{false,false}},{{false,false},{true,true}}};
+    constexpr bool monoDirections[3][2]={{true,false},{true,false},{false,true}};
+    for(unsigned dir=0;dir<3;++dir)for(unsigned rev=0;rev<2;++rev)
+    for(bool swap:{false,true})for(bool linear:{false,true})
+    for(auto style:{csp::Style::Simple,csp::Style::SimpleLine})for(unsigned channels:{1u,2u}) {
+        s={};s.new_fft=true;s.all_channels=true;s.direction=dir;s.reverse_frequency=rev!=0;
+        s.reverse_channels=swap;s.linear_frequency=linear;s.style=style;
+        int positions[2][2]={{-1,-1},{-1,-1}};
+        for(unsigned tone=0;tone<2;++tone){
+            std::vector<double> input(1024*channels,0);
+            for(unsigned ch=0;ch<channels;++ch)input[(tone?900:8)*channels+ch]=1;
+            engine.reset();engine.update(input,1024,channels,0,channels==1?0:1,800,200,0,s);
+            for(auto bar:engine.bars())if(bar.top==0){
+                check(bar.channel<channels,"direction probe channel identity");
+                check(positions[tone][bar.channel]==-1,"single tone emits one active group per channel");
+                positions[tone][bar.channel]=bar.left;
+                unsigned partition=swap?channels-1-bar.channel:bar.channel;
+                check(bar.left>=int(partition*800/channels) && bar.left<int((partition+1)*800/channels),"channel reversal changes partition, not frequency direction");
+            }
+        }
+        for(unsigned ch=0;ch<channels;++ch){
+            check(positions[0][ch]>=0 && positions[1][ch]>=0,"both frequency probes emitted");
+            bool expected=channels==1?monoDirections[dir][rev]:stereoDirections[dir][rev][ch];
+            check(expected?positions[0][ch]<positions[1][ch]:positions[0][ch]>positions[1][ch],"Engine frequency direction matches original caller and builder");
+        }
+    }
     // Native GDI gradient behavior and palette scope, including zero blur.
     s={};s.show_peaks=false;s.style=csp::Style::Simple;s.foreground=0xffffff;s.foreground2=0;s.background=0;
     std::vector<csp::Bar> probe{{0,3,0,0,0,1}};std::vector<uint32_t> gdiProbe(30);

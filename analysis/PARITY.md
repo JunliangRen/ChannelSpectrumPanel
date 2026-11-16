@@ -1,16 +1,16 @@
-# Original 0.17.2 versus x64 0.4.0 parity checklist
+# Original 0.17.2 versus x64 0.4.1 parity checklist
 
 Date: 2026-11-16. The goal is comprehensive reconstruction, but **it is not complete**. Matching option names and successful synthetic tests do not establish original behavior. For the original component, author credit, and release links, see the [README](../README.md#original-component-and-credit).
 
 ## Implemented features and evidence limits
 
-| Original feature | Status in 0.4.0 | Differences / verification limits |
+| Original feature | Status in 0.4.1 | Differences / verification limits |
 | --- | --- | --- |
 | Simple / Horizontal / Vertical | Solid, amplitude-colored, and full-height gradient rendering | Native GDI GradientFill; all combinations still need original pixel comparisons |
 | Both antialiasing styles | Bar-top gradient transitions | Native GDI; zero blur means no transition; old approx. labels removed, but not all combinations verified |
 | Blur level | Height percentage, 0-100 | 0x10003E3C-0x10003E79: trunc(abs(height)*level/100); zero is handled safely |
 | Simple-line | One-pixel channel contours | GDI Polyline and cross-partition connections; boundary point assembly still needs comparison; peaks are an extension |
-| Mirror / Right / Left | Implemented | 0.4.0 forces direction over Reverse and flips single-channel Mirror. Caller preprocessing at 0x100035FC-0x1000361C swaps forced directions when reversed: this remains a known discrepancy; builder-only fixtures do not cover it |
+| Mirror / Right / Left | Implemented | 0.4.1 reproduces the caller swap at 0x100035FC-0x1000361C; 96 Engine-level combinations check low/high-frequency placement, channel order, and single-channel behavior |
 | Reverse channel-pos | Implemented | Moves physical partitions while preserving logical direction; not merely an audio swap |
 | Rotate | Four orientations | Generic pixel rotation rather than the original four independent drawing paths |
 | Separate / Merge all / Specified | Implemented | Merge takes maxima; speaker bits map through the actual channel mask to compact input indices |
@@ -47,7 +47,7 @@ Version 3 contains 77 uint32 values (308 bytes). It preserves the first 12 field
 
 ## Validation
 
-- Release x64 build and 7,696 assertions passed.
+- Release x64 build and 8,844 assertions passed.
 - Coverage includes version 1/2 migration, complete version 3 round trips, every truncation point, original `.csp` magic/length/fields/colors/unknown styles, three-channel max/selection/order, empty masks, padding, eight styles across three directions/reversals/sizes, inverse rotation, preserved backgrounds, disabled peaks, blur percentage, and tick counts.
 - DirectDraw, parent-background caching, and dialog interaction lack automated host tests. Compilation does not establish runtime behavior.
 - `build/portable-test/foobar2000.exe` reached the New user interface module(s) found dialog. Window activation failed when selecting Columns UI, and recovery failed again. Panel instantiation and playback were not completed.
@@ -55,10 +55,12 @@ Version 3 contains 77 uint32 values (308 bytes). It preserves the first 12 field
 
 ## Remaining work
 
-1. Four-DWORD descriptors are reconstructed; 17,637 valid rows across 13 fixtures match. Untested floating-point profiles, bin 0, other parameters, and caller preprocessing still need comparison.
+1. Four-DWORD descriptors are reconstructed; 17,637 valid rows across 13 fixtures match. Untested floating-point profiles, bin 0, other parameters, and remaining caller behavior still need comparison. The forced-direction caller transformation is now covered by Engine-level regression tests.
 2. Compare GDI caches, all gradient/background combinations, four rotation paths, and Simple-line connections.
 3. Verify amplitude ticks and speaker mapping with real host audio and layouts.
 4. Validate real original `.csp` export/reimport, including legacy prefixes.
 5. Test loading, save/restart persistence, multiple panels, pause/seek/stop, long runs, DPI, and transparency/scanline behavior across graphics devices and monitors.
 
 These remain outstanding; the release does not claim complete original parity. See the [0.4.0 reconstruction record](RESTORATION-0.4.md) for emulation conditions and evidence.
+
+The direction fix and current host-test status are recorded in [DIRECTION-0.4.1.md](DIRECTION-0.4.1.md).
