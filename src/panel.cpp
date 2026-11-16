@@ -12,7 +12,7 @@
 #include "installation_guard.h"
 #include <uxtheme.h>
 
-DECLARE_COMPONENT_VERSION("Channel Spectrum Mirror", "1.2",
+DECLARE_COMPONENT_VERSION("Channel Spectrum Panel", "1.2.1",
     "Columns UI stereo spectrum for x86, x64 and ARM64EC. Independent reconstruction inspired by Channel Spectrum panel 0.17.2.\n"
     "Mirrored channels, original amplitude curves and fixed-point falling peaks. English, Simplified Chinese and Japanese settings.");
 class InstallationValidator : public component_installation_validator {
@@ -33,7 +33,7 @@ class Panel : public uie::window, private play_callback_impl_base {
 public:
     Panel():play_callback_impl_base(flag_on_playback_starting|flag_on_playback_new_track|flag_on_playback_stop|flag_on_playback_seek|flag_on_playback_pause){}
     const GUID& get_extension_guid() const override {return panel_guid;}
-    void get_name(pfc::string_base& out) const override {out="Channel Spectrum Mirror";}
+    void get_name(pfc::string_base& out) const override {out="Channel Spectrum Panel";}
     void get_category(pfc::string_base& out) const override {out="Visualisations";}
     unsigned get_type() const override {return uie::type_panel;}
     bool is_available(const uie::window_host_ptr&) const override {return true;}
@@ -77,7 +77,7 @@ public:
             wc.lpszClassName=window_class;wc.hCursor=LoadCursor(nullptr,IDC_ARROW);
             if(!RegisterClassEx(&wc) && GetLastError()!=ERROR_CLASS_ALREADY_EXISTS)return nullptr;
             host_=host;
-            window_=CreateWindowEx(settings_.edge==1?WS_EX_CLIENTEDGE:settings_.edge==2?WS_EX_STATICEDGE:0,window_class,L"Channel Spectrum Mirror",WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN,
+            window_=CreateWindowEx(settings_.edge==1?WS_EX_CLIENTEDGE:settings_.edge==2?WS_EX_STATICEDGE:0,window_class,L"Channel Spectrum Panel",WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN,
                 pos.x,pos.y,pos.cx,pos.cy,parent,nullptr,core_api::get_my_instance(),this);
             if(!window_)host_.release();
         }
@@ -107,7 +107,7 @@ private:
         monitor_events_->refresh(false);
         const bool tracked=csp::start_monitor_tracking(listening,
             [&]{return SetTimer(window_,3,5000,nullptr)!=0;},
-            [&]{console::print("Channel Spectrum Mirror: display monitoring unavailable; using manual FPS.");});
+            [&]{console::print("Channel Spectrum Panel: display monitoring unavailable; using manual FPS.");});
         monitor_events_->set_polling_active(!listening && tracked);
         active_fps_=csp::effective_refresh(settings_.follow_monitor && tracked,settings_.target_fps(),monitor_events_->current());
         auto playback=playback_control::get();
@@ -116,7 +116,7 @@ private:
         if(frame_timer_.start(window_,active_fps_)){refresh_running_=true;return;}
         csp::start_fallback_timer(
             [&]{return SetTimer(window_,1,UINT(std::ceil(1000.0/active_fps_)),nullptr)!=0;},
-            [&]{if(settings_.scanline_sync)console::print("Channel Spectrum Mirror: scanline sync unavailable; using regular timer.");});
+            [&]{if(settings_.scanline_sync)console::print("Channel Spectrum Panel: scanline sync unavailable; using regular timer.");});
         refresh_running_=true;
     }
     void clear_bitmap() {

@@ -30,7 +30,7 @@ Levels describe encoded sample peaks, not RMS or predicted panel heights. A stea
 
 Run this plan separately in isolated x86 and x64 portable test players with matching Columns UI and component packages, not the normal player profile. Record the exact player, Columns UI, and component versions. Install the local 0.5.0 package through Preferences > Components and restart when requested. Verify the component version in Preferences before testing; an old loaded DLL invalidates the comparison.
 
-Add Visualisations > Channel Spectrum Mirror. Use this baseline:
+Add Visualisations > Channel Spectrum Panel. Use this baseline:
 
 | Control | Value |
 | --- | --- |

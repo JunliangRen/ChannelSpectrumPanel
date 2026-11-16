@@ -284,7 +284,7 @@ INT_PTR CALLBACK settings_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp){
                 state->apply(next);state->value=next;state->changed=true;if(id==IDOK)EndDialog(w,IDOK);return TRUE;
             }
         }
-    }catch(const std::exception& e){csp::show_localized_error(w,e.what(),L"Channel Spectrum Mirror");return TRUE;}
+    }catch(const std::exception& e){csp::show_localized_error(w,e.what(),L"Channel Spectrum Panel");return TRUE;}
     return FALSE;
 }
 }

@@ -12,6 +12,8 @@ inline void settings_layout_tests(){
     check(dialog!=nullptr,"settings resource creates a hidden native dialog");
     csp::SettingsHeadingFont heading;
     struct Cleanup {HWND window;~Cleanup(){DestroyWindow(window);}} cleanup{dialog};
+    wchar_t title[128]{};GetWindowText(dialog,title,128);
+    check(wcscmp(title,L"Channel Spectrum Panel")==0,"settings dialog uses the unified component display name");
     csp::initialize_numeric_controls(dialog);
     csp::initialize_settings_tabs(dialog);heading.initialize(dialog);
     check(TabCtrl_GetItemCount(GetDlgItem(dialog,IDC_SETTINGS_TAB))==5,"five settings tabs");

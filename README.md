@@ -1,4 +1,4 @@
-# Channel Spectrum Mirror
+# Channel Spectrum Panel
 
 A spectrum visualization panel for foobar2000 and Columns UI, with separate audio channels, mirrored frequency layouts and falling peak markers. Available for x86, x64 and ARM64EC, with English, Simplified Chinese and Japanese settings.
 
