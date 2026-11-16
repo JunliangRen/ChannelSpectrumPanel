@@ -1,0 +1,35 @@
+L40727: 1001e495:	8b 75 08             	mov    esi,DWORD PTR [ebp+0x8]
+L40728: 1001e498:	57                   	push   edi
+L40729: 1001e499:	57                   	push   edi
+L40730: 1001e49a:	8b 3d a8 a1 02 10    	mov    edi,DWORD PTR ds:0x1002a1a8
+L40731: 1001e4a0:	68 4b 01 00 00       	push   0x14b
+L40732: 1001e4a5:	68 4b 04 00 00       	push   0x44b
+L40733: 1001e4aa:	56                   	push   esi
+L40734: 1001e4ab:	ff d7                	call   edi
+L40735: 1001e4ad:	8b 1d 24 a2 02 10    	mov    ebx,DWORD PTR ds:0x1002a224
+L40736: 1001e4b3:	68 08 c3 02 10       	push   0x1002c308
+L40737: 1001e4b8:	6a 00                	push   0x0
+L40738: 1001e4ba:	68 43 01 00 00       	push   0x143
+L40739: 1001e4bf:	68 4b 04 00 00       	push   0x44b
+L40740: 1001e4c4:	56                   	push   esi
+L40741: 1001e4c5:	ff d3                	call   ebx
+L40742: 1001e4c7:	68 10 c3 02 10       	push   0x1002c310
+L40743: 1001e4cc:	6a 00                	push   0x0
+L40744: 1001e4ce:	68 43 01 00 00       	push   0x143
+L40745: 1001e4d3:	68 4b 04 00 00       	push   0x44b
+L40746: 1001e4d8:	56                   	push   esi
+L40747: 1001e4d9:	ff d3                	call   ebx
+L40748: 1001e4db:	68 18 c3 02 10       	push   0x1002c318
+L40749: 1001e4e0:	6a 00                	push   0x0
+L40750: 1001e4e2:	68 43 01 00 00       	push   0x143
+L40751: 1001e4e7:	68 4b 04 00 00       	push   0x44b
+L40752: 1001e4ec:	56                   	push   esi
+L40753: 1001e4ed:	ff d3                	call   ebx
+L40754: 1001e4ef:	8b 5d 14             	mov    ebx,DWORD PTR [ebp+0x14]
+L40755: 1001e4f2:	8b 83 14 01 00 00    	mov    eax,DWORD PTR [ebx+0x114]
+L40756: 1001e4f8:	6a 00                	push   0x0
+L40757: 1001e4fa:	50                   	push   eax
+L40758: 1001e4fb:	68 4e 01 00 00       	push   0x14e
+L40759: 1001e500:	68 4b 04 00 00       	push   0x44b
+L40760: 1001e505:	56                   	push   esi
+L40761: 1001e506:	ff d7                	call   edi

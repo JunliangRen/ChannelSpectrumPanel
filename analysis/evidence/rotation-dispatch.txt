@@ -1,0 +1,35 @@
+L529: 10001440:	51                   	push   ecx
+L530: 10001441:	8b 8e 0c 0d 00 00    	mov    ecx,DWORD PTR [esi+0xd0c]
+L531: 10001447:	83 f9 03             	cmp    ecx,0x3
+L532: 1000144a:	77 47                	ja     0x10001493
+L533: 1000144c:	ff 24 8d a0 14 00 10 	jmp    DWORD PTR [ecx*4+0x100014a0]
+L534: 10001453:	50                   	push   eax
+L535: 10001454:	56                   	push   esi
+L536: 10001455:	e8 66 20 00 00       	call   0x100034c0
+L537: 1000145a:	c7 86 44 0d 00 00 01 	mov    DWORD PTR [esi+0xd44],0x1
+L538: 10001461:	00 00 00
+L539: 10001464:	59                   	pop    ecx
+L540: 10001465:	c3                   	ret
+L541: 10001466:	50                   	push   eax
+L542: 10001467:	56                   	push   esi
+L543: 10001468:	e8 83 3d 00 00       	call   0x100051f0
+L544: 1000146d:	c7 86 44 0d 00 00 01 	mov    DWORD PTR [esi+0xd44],0x1
+L545: 10001474:	00 00 00
+L546: 10001477:	59                   	pop    ecx
+L547: 10001478:	c3                   	ret
+L548: 10001479:	50                   	push   eax
+L549: 1000147a:	56                   	push   esi
+L550: 1000147b:	e8 d0 5a 00 00       	call   0x10006f50
+L551: 10001480:	c7 86 44 0d 00 00 01 	mov    DWORD PTR [esi+0xd44],0x1
+L552: 10001487:	00 00 00
+L553: 1000148a:	59                   	pop    ecx
+L554: 1000148b:	c3                   	ret
+L555: 1000148c:	50                   	push   eax
+L556: 1000148d:	56                   	push   esi
+L557: 1000148e:	e8 dd 77 00 00       	call   0x10008c70
+L558: 10001493:	c7 86 44 0d 00 00 01 	mov    DWORD PTR [esi+0xd44],0x1
+L559: 1000149a:	00 00 00
+L560: 1000149d:	59                   	pop    ecx
+L561: 1000149e:	c3                   	ret
+L562: 1000149f:	90                   	nop
+Jump table at 0x100014A0 (4 little-endian uint32): 0x10001453, 0x10001466, 0x10001479, 0x1000148c

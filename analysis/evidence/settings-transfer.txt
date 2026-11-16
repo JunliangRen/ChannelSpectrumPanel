@@ -1,0 +1,262 @@
+L44112: 10020bee:	8b 87 c4 00 00 00    	mov    eax,DWORD PTR [edi+0xc4]
+L44113: 10020bf4:	39 86 68 05 00 00    	cmp    DWORD PTR [esi+0x568],eax
+L44114: 10020bfa:	0f 84 ea 00 00 00    	je     0x10020cea
+L44115: 10020c00:	33 db                	xor    ebx,ebx
+L44116: 10020c02:	83 cd ff             	or     ebp,0xffffffff
+L44117: 10020c05:	3b c3                	cmp    eax,ebx
+L44118: 10020c07:	89 86 68 05 00 00    	mov    DWORD PTR [esi+0x568],eax
+L44119: 10020c0d:	74 68                	je     0x10020c77
+L44120: 10020c0f:	89 5c 24 10          	mov    DWORD PTR [esp+0x10],ebx
+L44121: 10020c13:	8d 4c 24 10          	lea    ecx,[esp+0x10]
+L44122: 10020c17:	51                   	push   ecx
+L44123: 10020c18:	89 5c 24 4c          	mov    DWORD PTR [esp+0x4c],ebx
+L44124: 10020c1c:	e8 8f f7 ff ff       	call   0x100203b0
+L44125: 10020c21:	83 c4 04             	add    esp,0x4
+L44126: 10020c24:	c7 44 24 48 01 00 00 	mov    DWORD PTR [esp+0x48],0x1
+L44127: 10020c2b:	00
+L44128: 10020c2c:	8b 4c 24 10          	mov    ecx,DWORD PTR [esp+0x10]
+L44129: 10020c30:	8b 11                	mov    edx,DWORD PTR [ecx]
+L44130: 10020c32:	8b 52 18             	mov    edx,DWORD PTR [edx+0x18]
+L44131: 10020c35:	8d 44 24 30          	lea    eax,[esp+0x30]
+L44132: 10020c39:	50                   	push   eax
+L44133: 10020c3a:	ff d2                	call   edx
+L44134: 10020c3c:	39 5c 24 30          	cmp    DWORD PTR [esp+0x30],ebx
+L44135: 10020c40:	77 23                	ja     0x10020c65
+L44136: 10020c42:	8b 44 24 34          	mov    eax,DWORD PTR [esp+0x34]
+L44137: 10020c46:	83 f8 09             	cmp    eax,0x9
+L44138: 10020c49:	72 14                	jb     0x10020c5f
+L44139: 10020c4b:	77 18                	ja     0x10020c65
+L44140: 10020c4d:	8b 44 24 38          	mov    eax,DWORD PTR [esp+0x38]
+L44141: 10020c51:	83 f8 05             	cmp    eax,0x5
+L44142: 10020c54:	72 09                	jb     0x10020c5f
+L44143: 10020c56:	77 0d                	ja     0x10020c65
+L44144: 10020c58:	83 7c 24 3c 02       	cmp    DWORD PTR [esp+0x3c],0x2
+L44145: 10020c5d:	73 06                	jae    0x10020c65
+L44146: 10020c5f:	89 9e 68 05 00 00    	mov    DWORD PTR [esi+0x568],ebx
+L44147: 10020c65:	89 6c 24 48          	mov    DWORD PTR [esp+0x48],ebp
+L44148: 10020c69:	8b 4c 24 10          	mov    ecx,DWORD PTR [esp+0x10]
+L44149: 10020c6d:	3b cb                	cmp    ecx,ebx
+L44150: 10020c6f:	74 06                	je     0x10020c77
+L44151: 10020c71:	8b 01                	mov    eax,DWORD PTR [ecx]
+L44152: 10020c73:	8b 10                	mov    edx,DWORD PTR [eax]
+L44153: 10020c75:	ff d2                	call   edx
+L44154: 10020c77:	39 5e 04             	cmp    DWORD PTR [esi+0x4],ebx
+L44155: 10020c7a:	c7 86 d0 0c 00 00 01 	mov    DWORD PTR [esi+0xcd0],0x1
+L44156: 10020c81:	00 00 00
+L44157: 10020c84:	74 64                	je     0x10020cea
+L44158: 10020c86:	c7 44 24 10 00 00 00 	mov    DWORD PTR [esp+0x10],0x0
+L44159: 10020c8d:	00
+L44160: 10020c8e:	8d 44 24 10          	lea    eax,[esp+0x10]
+L44161: 10020c92:	68 c0 c3 02 10       	push   0x1002c3c0
+L44162: 10020c97:	50                   	push   eax
+L44163: 10020c98:	c7 44 24 50 02 00 00 	mov    DWORD PTR [esp+0x50],0x2
+L44164: 10020c9f:	00
+L44165: 10020ca0:	e8 84 11 ff ff       	call   0x10011e29
+L44166: 10020ca5:	83 c4 08             	add    esp,0x8
+L44167: 10020ca8:	c7 44 24 48 04 00 00 	mov    DWORD PTR [esp+0x48],0x4
+L44168: 10020caf:	00
+L44169: 10020cb0:	8b 4c 24 10          	mov    ecx,DWORD PTR [esp+0x10]
+L44170: 10020cb4:	8b 86 68 05 00 00    	mov    eax,DWORD PTR [esi+0x568]
+L44171: 10020cba:	8b 11                	mov    edx,DWORD PTR [ecx]
+L44172: 10020cbc:	8b 52 0c             	mov    edx,DWORD PTR [edx+0xc]
+L44173: 10020cbf:	50                   	push   eax
+L44174: 10020cc0:	8d 5e 78             	lea    ebx,[esi+0x78]
+L44175: 10020cc3:	53                   	push   ebx
+L44176: 10020cc4:	ff d2                	call   edx
+L44177: 10020cc6:	89 6c 24 48          	mov    DWORD PTR [esp+0x48],ebp
+L44178: 10020cca:	8b 4c 24 10          	mov    ecx,DWORD PTR [esp+0x10]
+L44179: 10020cce:	85 c9                	test   ecx,ecx
+L44180: 10020cd0:	74 06                	je     0x10020cd8
+L44181: 10020cd2:	8b 01                	mov    eax,DWORD PTR [ecx]
+L44182: 10020cd4:	8b 10                	mov    edx,DWORD PTR [eax]
+L44183: 10020cd6:	ff d2                	call   edx
+L44184: 10020cd8:	83 3b 00             	cmp    DWORD PTR [ebx],0x0
+L44185: 10020cdb:	75 0d                	jne    0x10020cea
+L44186: 10020cdd:	68 54 bd 02 10       	push   0x1002bd54
+L44187: 10020ce2:	e8 b8 10 ff ff       	call   0x10011d9f
+L44188: 10020ce7:	83 c4 04             	add    esp,0x4
+L44189: 10020cea:	8b 4f 48             	mov    ecx,DWORD PTR [edi+0x48]
+L44190: 10020ced:	bb 01 00 00 00       	mov    ebx,0x1
+L44191: 10020cf2:	83 c1 09             	add    ecx,0x9
+L44192: 10020cf5:	8b c3                	mov    eax,ebx
+L44193: 10020cf7:	d3 e0                	shl    eax,cl
+L44194: 10020cf9:	39 86 80 00 00 00    	cmp    DWORD PTR [esi+0x80],eax
+L44195: 10020cff:	74 0c                	je     0x10020d0d
+L44196: 10020d01:	89 86 80 00 00 00    	mov    DWORD PTR [esi+0x80],eax
+L44197: 10020d07:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44198: 10020d0d:	8b 86 fc 0c 00 00    	mov    eax,DWORD PTR [esi+0xcfc]
+L44199: 10020d13:	3b 47 58             	cmp    eax,DWORD PTR [edi+0x58]
+L44200: 10020d16:	74 0f                	je     0x10020d27
+L44201: 10020d18:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44202: 10020d1e:	8b 4f 58             	mov    ecx,DWORD PTR [edi+0x58]
+L44203: 10020d21:	89 8e fc 0c 00 00    	mov    DWORD PTR [esi+0xcfc],ecx
+L44204: 10020d27:	8b 96 18 0d 00 00    	mov    edx,DWORD PTR [esi+0xd18]
+L44205: 10020d2d:	3b 57 74             	cmp    edx,DWORD PTR [edi+0x74]
+L44206: 10020d30:	74 0f                	je     0x10020d41
+L44207: 10020d32:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44208: 10020d38:	8b 47 74             	mov    eax,DWORD PTR [edi+0x74]
+L44209: 10020d3b:	89 86 18 0d 00 00    	mov    DWORD PTR [esi+0xd18],eax
+L44210: 10020d41:	8b 4f 60             	mov    ecx,DWORD PTR [edi+0x60]
+L44211: 10020d44:	3b 8e 00 0d 00 00    	cmp    ecx,DWORD PTR [esi+0xd00]
+L44212: 10020d4a:	74 0f                	je     0x10020d5b
+L44213: 10020d4c:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44214: 10020d52:	8b 57 60             	mov    edx,DWORD PTR [edi+0x60]
+L44215: 10020d55:	89 96 00 0d 00 00    	mov    DWORD PTR [esi+0xd00],edx
+L44216: 10020d5b:	8b 47 6c             	mov    eax,DWORD PTR [edi+0x6c]
+L44217: 10020d5e:	3b 86 10 0d 00 00    	cmp    eax,DWORD PTR [esi+0xd10]
+L44218: 10020d64:	74 0f                	je     0x10020d75
+L44219: 10020d66:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44220: 10020d6c:	8b 4f 6c             	mov    ecx,DWORD PTR [edi+0x6c]
+L44221: 10020d6f:	89 8e 10 0d 00 00    	mov    DWORD PTR [esi+0xd10],ecx
+L44222: 10020d75:	8b 57 68             	mov    edx,DWORD PTR [edi+0x68]
+L44223: 10020d78:	3b 96 0c 0d 00 00    	cmp    edx,DWORD PTR [esi+0xd0c]
+L44224: 10020d7e:	74 0f                	je     0x10020d8f
+L44225: 10020d80:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44226: 10020d86:	8b 47 68             	mov    eax,DWORD PTR [edi+0x68]
+L44227: 10020d89:	89 86 0c 0d 00 00    	mov    DWORD PTR [esi+0xd0c],eax
+L44228: 10020d8f:	8b 47 78             	mov    eax,DWORD PTR [edi+0x78]
+L44229: 10020d92:	39 86 30 0d 00 00    	cmp    DWORD PTR [esi+0xd30],eax
+L44230: 10020d98:	74 06                	je     0x10020da0
+L44231: 10020d9a:	89 86 30 0d 00 00    	mov    DWORD PTR [esi+0xd30],eax
+L44232: 10020da0:	8b 47 7c             	mov    eax,DWORD PTR [edi+0x7c]
+L44233: 10020da3:	39 86 18 04 00 00    	cmp    DWORD PTR [esi+0x418],eax
+L44234: 10020da9:	74 06                	je     0x10020db1
+L44235: 10020dab:	89 86 18 04 00 00    	mov    DWORD PTR [esi+0x418],eax
+L44236: 10020db1:	8b 87 90 00 00 00    	mov    eax,DWORD PTR [edi+0x90]
+L44237: 10020db7:	39 86 1c 04 00 00    	cmp    DWORD PTR [esi+0x41c],eax
+L44238: 10020dbd:	74 06                	je     0x10020dc5
+L44239: 10020dbf:	89 86 1c 04 00 00    	mov    DWORD PTR [esi+0x41c],eax
+L44240: 10020dc5:	8b 8f 8c 00 00 00    	mov    ecx,DWORD PTR [edi+0x8c]
+L44241: 10020dcb:	3b 8e 34 0d 00 00    	cmp    ecx,DWORD PTR [esi+0xd34]
+L44242: 10020dd1:	74 12                	je     0x10020de5
+L44243: 10020dd3:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44244: 10020dd9:	8b 97 8c 00 00 00    	mov    edx,DWORD PTR [edi+0x8c]
+L44245: 10020ddf:	89 96 34 0d 00 00    	mov    DWORD PTR [esi+0xd34],edx
+L44246: 10020de5:	8b 47 5c             	mov    eax,DWORD PTR [edi+0x5c]
+L44247: 10020de8:	8b 96 14 0d 00 00    	mov    edx,DWORD PTR [esi+0xd14]
+L44248: 10020dee:	89 86 04 0d 00 00    	mov    DWORD PTR [esi+0xd04],eax
+L44249: 10020df4:	8b 4f 64             	mov    ecx,DWORD PTR [edi+0x64]
+L44250: 10020df7:	89 8e 08 0d 00 00    	mov    DWORD PTR [esi+0xd08],ecx
+L44251: 10020dfd:	3b 57 70             	cmp    edx,DWORD PTR [edi+0x70]
+L44252: 10020e00:	74 0f                	je     0x10020e11
+L44253: 10020e02:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44254: 10020e08:	8b 47 70             	mov    eax,DWORD PTR [edi+0x70]
+L44255: 10020e0b:	89 86 14 0d 00 00    	mov    DWORD PTR [esi+0xd14],eax
+L44256: 10020e11:	8d 8e 48 0d 00 00    	lea    ecx,[esi+0xd48]
+L44257: 10020e17:	8d 87 c8 00 00 00    	lea    eax,[edi+0xc8]
+L44258: 10020e1d:	ba 12 00 00 00       	mov    edx,0x12
+L44259: 10020e22:	8b 29                	mov    ebp,DWORD PTR [ecx]
+L44260: 10020e24:	3b 28                	cmp    ebp,DWORD PTR [eax]
+L44261: 10020e26:	74 0a                	je     0x10020e32
+L44262: 10020e28:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44263: 10020e2e:	8b 28                	mov    ebp,DWORD PTR [eax]
+L44264: 10020e30:	89 29                	mov    DWORD PTR [ecx],ebp
+L44265: 10020e32:	83 c0 04             	add    eax,0x4
+L44266: 10020e35:	83 c1 04             	add    ecx,0x4
+L44267: 10020e38:	2b d3                	sub    edx,ebx
+L44268: 10020e3a:	75 e6                	jne    0x10020e22
+L44269: 10020e3c:	8b 8e d8 0d 00 00    	mov    ecx,DWORD PTR [esi+0xdd8]
+L44270: 10020e42:	3b 8f 10 01 00 00    	cmp    ecx,DWORD PTR [edi+0x110]
+L44271: 10020e48:	74 12                	je     0x10020e5c
+L44272: 10020e4a:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44273: 10020e50:	8b 97 10 01 00 00    	mov    edx,DWORD PTR [edi+0x110]
+L44274: 10020e56:	89 96 d8 0d 00 00    	mov    DWORD PTR [esi+0xdd8],edx
+L44275: 10020e5c:	8b 86 dc 0d 00 00    	mov    eax,DWORD PTR [esi+0xddc]
+L44276: 10020e62:	3b 87 14 01 00 00    	cmp    eax,DWORD PTR [edi+0x114]
+L44277: 10020e68:	74 12                	je     0x10020e7c
+L44278: 10020e6a:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44279: 10020e70:	8b 8f 14 01 00 00    	mov    ecx,DWORD PTR [edi+0x114]
+L44280: 10020e76:	89 8e dc 0d 00 00    	mov    DWORD PTR [esi+0xddc],ecx
+L44281: 10020e7c:	8b 96 e0 0d 00 00    	mov    edx,DWORD PTR [esi+0xde0]
+L44282: 10020e82:	3b 97 18 01 00 00    	cmp    edx,DWORD PTR [edi+0x118]
+L44283: 10020e88:	74 12                	je     0x10020e9c
+L44284: 10020e8a:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44285: 10020e90:	8b 87 18 01 00 00    	mov    eax,DWORD PTR [edi+0x118]
+L44286: 10020e96:	89 86 e0 0d 00 00    	mov    DWORD PTR [esi+0xde0],eax
+L44287: 10020e9c:	8b 8e e4 0d 00 00    	mov    ecx,DWORD PTR [esi+0xde4]
+L44288: 10020ea2:	3b 8f 1c 01 00 00    	cmp    ecx,DWORD PTR [edi+0x11c]
+L44289: 10020ea8:	74 12                	je     0x10020ebc
+L44290: 10020eaa:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44291: 10020eb0:	8b 97 1c 01 00 00    	mov    edx,DWORD PTR [edi+0x11c]
+L44292: 10020eb6:	89 96 e4 0d 00 00    	mov    DWORD PTR [esi+0xde4],edx
+L44293: 10020ebc:	8b 86 e8 0d 00 00    	mov    eax,DWORD PTR [esi+0xde8]
+L44294: 10020ec2:	3b 87 20 01 00 00    	cmp    eax,DWORD PTR [edi+0x120]
+L44295: 10020ec8:	74 12                	je     0x10020edc
+L44296: 10020eca:	89 9e d0 0c 00 00    	mov    DWORD PTR [esi+0xcd0],ebx
+L44297: 10020ed0:	8b 8f 20 01 00 00    	mov    ecx,DWORD PTR [edi+0x120]
+L44298: 10020ed6:	89 8e e8 0d 00 00    	mov    DWORD PTR [esi+0xde8],ecx
+L44299: 10020edc:	8d 87 24 01 00 00    	lea    eax,[edi+0x124]
+L44300: 10020ee2:	8d 8e ec 0d 00 00    	lea    ecx,[esi+0xdec]
+L44301: 10020ee8:	bb 02 00 00 00       	mov    ebx,0x2
+L44302: 10020eed:	ba 02 00 00 00       	mov    edx,0x2
+L44303: 10020ef2:	8b 28                	mov    ebp,DWORD PTR [eax]
+L44304: 10020ef4:	3b 29                	cmp    ebp,DWORD PTR [ecx]
+L44305: 10020ef6:	74 0e                	je     0x10020f06
+L44306: 10020ef8:	c7 86 d0 0c 00 00 01 	mov    DWORD PTR [esi+0xcd0],0x1
+L44307: 10020eff:	00 00 00
+L44308: 10020f02:	8b 28                	mov    ebp,DWORD PTR [eax]
+L44309: 10020f04:	89 29                	mov    DWORD PTR [ecx],ebp
+L44310: 10020f06:	83 c0 04             	add    eax,0x4
+L44311: 10020f09:	83 c1 04             	add    ecx,0x4
+L44312: 10020f0c:	83 ea 01             	sub    edx,0x1
+L44313: 10020f0f:	75 e1                	jne    0x10020ef2
+L44314: 10020f11:	83 eb 01             	sub    ebx,0x1
+L44315: 10020f14:	75 d7                	jne    0x10020eed
+L44316: 10020f16:	8b 57 4c             	mov    edx,DWORD PTR [edi+0x4c]
+L44317: 10020f19:	89 96 b4 0c 00 00    	mov    DWORD PTR [esi+0xcb4],edx
+L44318: 10020f1f:	8b 87 bc 00 00 00    	mov    eax,DWORD PTR [edi+0xbc]
+L44319: 10020f25:	8b 96 d4 0c 00 00    	mov    edx,DWORD PTR [esi+0xcd4]
+L44320: 10020f2b:	89 86 b8 0c 00 00    	mov    DWORD PTR [esi+0xcb8],eax
+L44321: 10020f31:	8b 8f c0 00 00 00    	mov    ecx,DWORD PTR [edi+0xc0]
+L44322: 10020f37:	52                   	push   edx
+L44323: 10020f38:	8d 86 70 08 00 00    	lea    eax,[esi+0x870]
+L44324: 10020f3e:	50                   	push   eax
+L44325: 10020f3f:	8b 86 e8 0c 00 00    	mov    eax,DWORD PTR [esi+0xce8]
+L44326: 10020f45:	50                   	push   eax
+L44327: 10020f46:	8b 86 e0 0c 00 00    	mov    eax,DWORD PTR [esi+0xce0]
+L44328: 10020f4c:	89 8e 38 0d 00 00    	mov    DWORD PTR [esi+0xd38],ecx
+L44329: 10020f52:	8b 8e dc 0c 00 00    	mov    ecx,DWORD PTR [esi+0xcdc]
+L44330: 10020f58:	56                   	push   esi
+L44331: 10020f59:	e8 02 f5 ff ff       	call   0x10020460
+L44332: 10020f5e:	8b 46 0c             	mov    eax,DWORD PTR [esi+0xc]
+L44333: 10020f61:	33 db                	xor    ebx,ebx
+L44334: 10020f63:	3b c3                	cmp    eax,ebx
+L44335: 10020f65:	74 0a                	je     0x10020f71
+L44336: 10020f67:	50                   	push   eax
+L44337: 10020f68:	ff 15 04 a0 02 10    	call   DWORD PTR ds:0x1002a004
+L44338: 10020f6e:	89 5e 0c             	mov    DWORD PTR [esi+0xc],ebx
+L44339: 10020f71:	8b c6                	mov    eax,esi
+L44340: 10020f73:	e8 58 06 fe ff       	call   0x100015d0
+L44341: 10020f78:	8b 7f 3c             	mov    edi,DWORD PTR [edi+0x3c]
+L44342: 10020f7b:	3b be f4 0c 00 00    	cmp    edi,DWORD PTR [esi+0xcf4]
+L44343: 10020f81:	74 37                	je     0x10020fba
+L44344: 10020f83:	39 5e 7c             	cmp    DWORD PTR [esi+0x7c],ebx
+L44345: 10020f86:	89 be f4 0c 00 00    	mov    DWORD PTR [esi+0xcf4],edi
+L44346: 10020f8c:	74 12                	je     0x10020fa0
+L44347: 10020f8e:	8b 4e 04             	mov    ecx,DWORD PTR [esi+0x4]
+L44348: 10020f91:	68 ff 7f 00 00       	push   0x7fff
+L44349: 10020f96:	51                   	push   ecx
+L44350: 10020f97:	ff 15 d4 a1 02 10    	call   DWORD PTR ds:0x1002a1d4
+L44351: 10020f9d:	89 5e 7c             	mov    DWORD PTR [esi+0x7c],ebx
+L44352: 10020fa0:	8b 96 f4 0c 00 00    	mov    edx,DWORD PTR [esi+0xcf4]
+L44353: 10020fa6:	8b 46 04             	mov    eax,DWORD PTR [esi+0x4]
+L44354: 10020fa9:	53                   	push   ebx
+L44355: 10020faa:	52                   	push   edx
+L44356: 10020fab:	68 ff 7f 00 00       	push   0x7fff
+L44357: 10020fb0:	50                   	push   eax
+L44358: 10020fb1:	ff 15 c0 a1 02 10    	call   DWORD PTR ds:0x1002a1c0
+L44359: 10020fb7:	89 46 7c             	mov    DWORD PTR [esi+0x7c],eax
+L44360: 10020fba:	8b 86 f4 0c 00 00    	mov    eax,DWORD PTR [esi+0xcf4]
+L44361: 10020fc0:	db 86 b4 0c 00 00    	fild   DWORD PTR [esi+0xcb4]
+L44362: 10020fc6:	89 44 24 14          	mov    DWORD PTR [esp+0x14],eax
+L44363: 10020fca:	b9 f4 01 00 00       	mov    ecx,0x1f4
+L44364: 10020fcf:	da 4c 24 14          	fimul  DWORD PTR [esp+0x14]
+L44365: 10020fd3:	2b c8                	sub    ecx,eax
+L44366: 10020fd5:	89 4c 24 14          	mov    DWORD PTR [esp+0x14],ecx
+L44367: 10020fd9:	dc 0d e0 c4 02 10    	fmul   QWORD PTR ds:0x1002c4e0
+L44368: 10020fdf:	db 44 24 14          	fild   DWORD PTR [esp+0x14]
+L44369: 10020fe3:	de f9                	fdivp  st(1),st
+L44370: 10020fe5:	e8 96 18 00 00       	call   0x10022880
+L44371: 10020fea:	39 9e 38 0d 00 00    	cmp    DWORD PTR [esi+0xd38],ebx
+L44372: 10020ff0:	89 86 b0 0c 00 00    	mov    DWORD PTR [esi+0xcb0],eax
+L44373: 10020ff6:	75 74                	jne    0x1002106c

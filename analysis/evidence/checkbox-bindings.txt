@@ -1,0 +1,107 @@
+L42028: 1001f5e3:	8b 5d 14             	mov    ebx,DWORD PTR [ebp+0x14]
+L42029: 1001f5e6:	8b 4b 68             	mov    ecx,DWORD PTR [ebx+0x68]
+L42030: 1001f5e9:	6a 00                	push   0x0
+L42031: 1001f5eb:	51                   	push   ecx
+L42032: 1001f5ec:	68 4e 01 00 00       	push   0x14e
+L42033: 1001f5f1:	68 04 04 00 00       	push   0x404
+L42034: 1001f5f6:	56                   	push   esi
+L42035: 1001f5f7:	ff d7                	call   edi
+L42036: 1001f5f9:	33 d2                	xor    edx,edx
+L42037: 1001f5fb:	39 93 8c 00 00 00    	cmp    DWORD PTR [ebx+0x8c],edx
+L42038: 1001f601:	6a 00                	push   0x0
+L42039: 1001f603:	0f 95 c2             	setne  dl
+L42040: 1001f606:	52                   	push   edx
+L42041: 1001f607:	68 f1 00 00 00       	push   0xf1
+L42042: 1001f60c:	68 44 04 00 00       	push   0x444
+L42043: 1001f611:	56                   	push   esi
+L42044: 1001f612:	ff d7                	call   edi
+L42045: 1001f614:	33 c0                	xor    eax,eax
+L42046: 1001f616:	39 43 34             	cmp    DWORD PTR [ebx+0x34],eax
+L42047: 1001f619:	6a 00                	push   0x0
+L42048: 1001f61b:	0f 95 c0             	setne  al
+L42049: 1001f61e:	50                   	push   eax
+L42050: 1001f61f:	68 f1 00 00 00       	push   0xf1
+L42051: 1001f624:	68 2d 04 00 00       	push   0x42d
+L42052: 1001f629:	56                   	push   esi
+L42053: 1001f62a:	ff d7                	call   edi
+L42054: 1001f62c:	33 c9                	xor    ecx,ecx
+L42055: 1001f62e:	39 4b 7c             	cmp    DWORD PTR [ebx+0x7c],ecx
+L42056: 1001f631:	6a 00                	push   0x0
+L42057: 1001f633:	0f 95 c1             	setne  cl
+L42058: 1001f636:	51                   	push   ecx
+L42059: 1001f637:	68 f1 00 00 00       	push   0xf1
+L42060: 1001f63c:	68 31 04 00 00       	push   0x431
+L42061: 1001f641:	56                   	push   esi
+L42062: 1001f642:	ff d7                	call   edi
+L42063: 1001f644:	33 d2                	xor    edx,edx
+L42064: 1001f646:	39 93 90 00 00 00    	cmp    DWORD PTR [ebx+0x90],edx
+L42065: 1001f64c:	6a 00                	push   0x0
+L42066: 1001f64e:	0f 95 c2             	setne  dl
+L42067: 1001f651:	52                   	push   edx
+L42068: 1001f652:	68 f1 00 00 00       	push   0xf1
+L42069: 1001f657:	68 45 04 00 00       	push   0x445
+L42070: 1001f65c:	56                   	push   esi
+L42071: 1001f65d:	ff d7                	call   edi
+L42072: 1001f65f:	33 c0                	xor    eax,eax
+L42073: 1001f661:	39 43 44             	cmp    DWORD PTR [ebx+0x44],eax
+L42074: 1001f664:	6a 00                	push   0x0
+L42075: 1001f666:	0f 95 c0             	setne  al
+L42076: 1001f669:	50                   	push   eax
+L42077: 1001f66a:	68 f1 00 00 00       	push   0xf1
+L42078: 1001f66f:	68 32 04 00 00       	push   0x432
+L42079: 1001f674:	56                   	push   esi
+L42080: 1001f675:	ff d7                	call   edi
+L42081: 1001f677:	6a 00                	push   0x0
+L42082: 1001f679:	33 c9                	xor    ecx,ecx
+L42083: 1001f67b:	39 4b 50             	cmp    DWORD PTR [ebx+0x50],ecx
+L42084: 1001f67e:	0f 95 c1             	setne  cl
+L42085: 1001f681:	51                   	push   ecx
+L42086: 1001f682:	68 f1 00 00 00       	push   0xf1
+L42087: 1001f687:	68 38 04 00 00       	push   0x438
+L42088: 1001f68c:	56                   	push   esi
+L42089: 1001f68d:	ff d7                	call   edi
+L42090: 1001f68f:	33 d2                	xor    edx,edx
+L42091: 1001f691:	39 53 54             	cmp    DWORD PTR [ebx+0x54],edx
+L42092: 1001f694:	6a 00                	push   0x0
+L42093: 1001f696:	0f 95 c2             	setne  dl
+L42094: 1001f699:	52                   	push   edx
+L42095: 1001f69a:	68 f1 00 00 00       	push   0xf1
+L42096: 1001f69f:	68 3a 04 00 00       	push   0x43a
+L42097: 1001f6a4:	56                   	push   esi
+L42098: 1001f6a5:	ff d7                	call   edi
+L42099: 1001f6a7:	33 c0                	xor    eax,eax
+L42100: 1001f6a9:	39 43 58             	cmp    DWORD PTR [ebx+0x58],eax
+L42101: 1001f6ac:	6a 00                	push   0x0
+L42102: 1001f6ae:	0f 95 c0             	setne  al
+L42103: 1001f6b1:	50                   	push   eax
+L42104: 1001f6b2:	68 f1 00 00 00       	push   0xf1
+L42105: 1001f6b7:	68 39 04 00 00       	push   0x439
+L42106: 1001f6bc:	56                   	push   esi
+L42107: 1001f6bd:	ff d7                	call   edi
+L42108: 1001f6bf:	33 c9                	xor    ecx,ecx
+L42109: 1001f6c1:	39 4b 60             	cmp    DWORD PTR [ebx+0x60],ecx
+L42110: 1001f6c4:	6a 00                	push   0x0
+L42111: 1001f6c6:	0f 95 c1             	setne  cl
+L42112: 1001f6c9:	51                   	push   ecx
+L42113: 1001f6ca:	68 f1 00 00 00       	push   0xf1
+L42114: 1001f6cf:	68 3b 04 00 00       	push   0x43b
+L42115: 1001f6d4:	56                   	push   esi
+L42116: 1001f6d5:	ff d7                	call   edi
+L42117: 1001f6d7:	33 d2                	xor    edx,edx
+L42118: 1001f6d9:	39 53 6c             	cmp    DWORD PTR [ebx+0x6c],edx
+L42119: 1001f6dc:	6a 00                	push   0x0
+L42120: 1001f6de:	0f 95 c2             	setne  dl
+L42121: 1001f6e1:	52                   	push   edx
+L42122: 1001f6e2:	68 f1 00 00 00       	push   0xf1
+L42123: 1001f6e7:	68 3c 04 00 00       	push   0x43c
+L42124: 1001f6ec:	56                   	push   esi
+L42125: 1001f6ed:	ff d7                	call   edi
+L42126: 1001f6ef:	33 c0                	xor    eax,eax
+L42127: 1001f6f1:	39 83 c0 00 00 00    	cmp    DWORD PTR [ebx+0xc0],eax
+L42128: 1001f6f7:	6a 00                	push   0x0
+L42129: 1001f6f9:	0f 95 c0             	setne  al
+L42130: 1001f6fc:	50                   	push   eax
+L42131: 1001f6fd:	68 f1 00 00 00       	push   0xf1
+L42132: 1001f702:	68 48 04 00 00       	push   0x448
+L42133: 1001f707:	56                   	push   esi
+L42134: 1001f708:	ff d7                	call   edi

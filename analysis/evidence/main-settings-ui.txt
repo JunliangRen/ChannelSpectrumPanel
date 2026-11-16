@@ -1,0 +1,50 @@
+L41710: 1001f1dd:	80 3d 1c 55 03 10 00 	cmp    BYTE PTR ds:0x1003551c,0x0
+L41711: 1001f1e4:	0f 84 7d 08 00 00    	je     0x1001fa67
+L41712: 1001f1ea:	8b 75 08             	mov    esi,DWORD PTR [ebp+0x8]
+L41713: 1001f1ed:	6a 08                	push   0x8
+L41714: 1001f1ef:	56                   	push   esi
+L41715: 1001f1f0:	ff 15 f4 a1 02 10    	call   DWORD PTR ds:0x1002a1f4
+L41716: 1001f1f6:	6a 01                	push   0x1
+L41717: 1001f1f8:	8d 54 24 10          	lea    edx,[esp+0x10]
+L41718: 1001f1fc:	52                   	push   edx
+L41719: 1001f1fd:	68 34 04 00 00       	push   0x434
+L41720: 1001f202:	56                   	push   esi
+L41721: 1001f203:	8b f8                	mov    edi,eax
+L41722: 1001f205:	ff 15 9c a1 02 10    	call   DWORD PTR ds:0x1002a19c
+L41723: 1001f20b:	83 7c 24 0c 00       	cmp    DWORD PTR [esp+0xc],0x0
+L41724: 1001f210:	0f 84 51 08 00 00    	je     0x1001fa67
+L41725: 1001f216:	83 f8 64             	cmp    eax,0x64
+L41726: 1001f219:	7e 0d                	jle    0x1001f228
+L41727: 1001f21b:	b8 64 00 00 00       	mov    eax,0x64
+L41728: 1001f220:	89 47 3c             	mov    DWORD PTR [edi+0x3c],eax
+L41729: 1001f223:	e9 3f 08 00 00       	jmp    0x1001fa67
+L41730: 1001f228:	83 f8 05             	cmp    eax,0x5
+L41731: 1001f22b:	7d 05                	jge    0x1001f232
+L41732: 1001f22d:	b8 05 00 00 00       	mov    eax,0x5
+L41733: 1001f232:	89 47 3c             	mov    DWORD PTR [edi+0x3c],eax
+L41734: 1001f235:	e9 2d 08 00 00       	jmp    0x1001fa67
+L41735: 1001f23a:	80 3d 1c 55 03 10 00 	cmp    BYTE PTR ds:0x1003551c,0x0
+L41736: 1001f241:	0f 84 20 08 00 00    	je     0x1001fa67
+L41737: 1001f247:	8b 75 08             	mov    esi,DWORD PTR [ebp+0x8]
+L41738: 1001f24a:	6a 08                	push   0x8
+L41739: 1001f24c:	56                   	push   esi
+L41740: 1001f24d:	ff 15 f4 a1 02 10    	call   DWORD PTR ds:0x1002a1f4
+L41741: 1001f253:	6a 01                	push   0x1
+L41742: 1001f255:	8b f8                	mov    edi,eax
+L41743: 1001f257:	8d 44 24 10          	lea    eax,[esp+0x10]
+L41744: 1001f25b:	50                   	push   eax
+L41745: 1001f25c:	68 3d 04 00 00       	push   0x43d
+L41746: 1001f261:	56                   	push   esi
+L41747: 1001f262:	ff 15 9c a1 02 10    	call   DWORD PTR ds:0x1002a19c
+L41748: 1001f268:	83 7c 24 0c 00       	cmp    DWORD PTR [esp+0xc],0x0
+L41749: 1001f26d:	0f 84 f4 07 00 00    	je     0x1001fa67
+L41750: 1001f273:	3d e8 03 00 00       	cmp    eax,0x3e8
+L41751: 1001f278:	7e 0d                	jle    0x1001f287
+L41752: 1001f27a:	b8 e8 03 00 00       	mov    eax,0x3e8
+L41753: 1001f27f:	89 47 70             	mov    DWORD PTR [edi+0x70],eax
+L41754: 1001f282:	e9 e0 07 00 00       	jmp    0x1001fa67
+L41755: 1001f287:	83 f8 01             	cmp    eax,0x1
+L41756: 1001f28a:	7d 05                	jge    0x1001f291
+L41757: 1001f28c:	b8 01 00 00 00       	mov    eax,0x1
+L41758: 1001f291:	89 47 70             	mov    DWORD PTR [edi+0x70],eax
+L41759: 1001f294:	e9 ce 07 00 00       	jmp    0x1001fa67

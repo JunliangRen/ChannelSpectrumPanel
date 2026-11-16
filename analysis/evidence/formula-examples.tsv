@@ -1,0 +1,17 @@
+# Formula-only examples, no DLL execution or audio validation
+kind	input	result
+new amplitude	A=1; R=100; slope=0.2857142857142857	1
+new amplitude	A=1; R=100; slope=0.25	1
+new amplitude	A=0.1; R=100; slope=0.2857142857142857	0.714285714286
+new amplitude	A=0.1; R=100; slope=0.25	0.75
+new amplitude	A=0.01; R=100; slope=0.2857142857142857	0.428571428571
+new amplitude	A=0.01; R=100; slope=0.25	0.5
+new amplitude	A=0.001; R=100; slope=0.2857142857142857	0.142857142857
+new amplitude	A=0.001; R=100; slope=0.25	0.25
+new amplitude	A=0; R=100; slope=0.2857142857142857	0
+new amplitude	A=0; R=100; slope=0.25	0
+old normalization	N=2048	K=2.30932515209
+peak displacement px	V=10; I=14; a=36; updates=1	0.140625
+peak displacement px	V=10; I=14; a=36; updates=10	7.734375
+peak displacement px	V=10; I=14; a=36; updates=20	29.53125
+peak displacement px	V=10; I=14; a=36; updates=70	349.453125

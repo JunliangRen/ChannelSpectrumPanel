@@ -1,0 +1,175 @@
+L38926: 1001cde0:	8b 44 24 08          	mov    eax,DWORD PTR [esp+0x8]
+L38927: 1001cde4:	2d 10 01 00 00       	sub    eax,0x110
+L38928: 1001cde9:	56                   	push   esi
+L38929: 1001cdea:	57                   	push   edi
+L38930: 1001cdeb:	0f 84 7c 01 00 00    	je     0x1001cf6d
+L38931: 1001cdf1:	83 e8 01             	sub    eax,0x1
+L38932: 1001cdf4:	0f 85 13 02 00 00    	jne    0x1001d00d
+L38933: 1001cdfa:	8b 44 24 14          	mov    eax,DWORD PTR [esp+0x14]
+L38934: 1001cdfe:	3d 44 04 00 00       	cmp    eax,0x444
+L38935: 1001ce03:	0f 87 82 00 00 00    	ja     0x1001ce8b
+L38936: 1001ce09:	74 4d                	je     0x1001ce58
+L38937: 1001ce0b:	83 e8 01             	sub    eax,0x1
+L38938: 1001ce0e:	74 24                	je     0x1001ce34
+L38939: 1001ce10:	83 e8 01             	sub    eax,0x1
+L38940: 1001ce13:	0f 85 f4 01 00 00    	jne    0x1001d00d
+L38941: 1001ce19:	8b 44 24 0c          	mov    eax,DWORD PTR [esp+0xc]
+L38942: 1001ce1d:	6a 00                	push   0x0
+L38943: 1001ce1f:	50                   	push   eax
+L38944: 1001ce20:	ff 15 a4 a1 02 10    	call   DWORD PTR ds:0x1002a1a4
+L38945: 1001ce26:	5f                   	pop    edi
+L38946: 1001ce27:	c6 05 1f 55 03 10 00 	mov    BYTE PTR ds:0x1003551f,0x0
+L38947: 1001ce2e:	33 c0                	xor    eax,eax
+L38948: 1001ce30:	5e                   	pop    esi
+L38949: 1001ce31:	c2 10 00             	ret    0x10
+L38950: 1001ce34:	8b 74 24 0c          	mov    esi,DWORD PTR [esp+0xc]
+L38951: 1001ce38:	6a 08                	push   0x8
+L38952: 1001ce3a:	56                   	push   esi
+L38953: 1001ce3b:	c6 05 1f 55 03 10 00 	mov    BYTE PTR ds:0x1003551f,0x0
+L38954: 1001ce42:	ff 15 f4 a1 02 10    	call   DWORD PTR ds:0x1002a1f4
+L38955: 1001ce48:	6a 01                	push   0x1
+L38956: 1001ce4a:	56                   	push   esi
+L38957: 1001ce4b:	ff 15 a4 a1 02 10    	call   DWORD PTR ds:0x1002a1a4
+L38958: 1001ce51:	5f                   	pop    edi
+L38959: 1001ce52:	33 c0                	xor    eax,eax
+L38960: 1001ce54:	5e                   	pop    esi
+L38961: 1001ce55:	c2 10 00             	ret    0x10
+L38962: 1001ce58:	80 3d 1f 55 03 10 00 	cmp    BYTE PTR ds:0x1003551f,0x0
+L38963: 1001ce5f:	0f 84 a8 01 00 00    	je     0x1001d00d
+L38964: 1001ce65:	8b 4c 24 0c          	mov    ecx,DWORD PTR [esp+0xc]
+L38965: 1001ce69:	6a 08                	push   0x8
+L38966: 1001ce6b:	51                   	push   ecx
+L38967: 1001ce6c:	ff 15 f4 a1 02 10    	call   DWORD PTR ds:0x1002a1f4
+L38968: 1001ce72:	8b 70 04             	mov    esi,DWORD PTR [eax+0x4]
+L38969: 1001ce75:	85 f6                	test   esi,esi
+L38970: 1001ce77:	0f 84 90 01 00 00    	je     0x1001d00d
+L38971: 1001ce7d:	8b c8                	mov    ecx,eax
+L38972: 1001ce7f:	e8 ec 3a 00 00       	call   0x10020970
+L38973: 1001ce84:	5f                   	pop    edi
+L38974: 1001ce85:	33 c0                	xor    eax,eax
+L38975: 1001ce87:	5e                   	pop    esi
+L38976: 1001ce88:	c2 10 00             	ret    0x10
+L38977: 1001ce8b:	2d 45 04 00 03       	sub    eax,0x3000445
+L38978: 1001ce90:	74 79                	je     0x1001cf0b
+L38979: 1001ce92:	83 e8 02             	sub    eax,0x2
+L38980: 1001ce95:	0f 85 72 01 00 00    	jne    0x1001d00d
+L38981: 1001ce9b:	80 3d 1f 55 03 10 00 	cmp    BYTE PTR ds:0x1003551f,0x0
+L38982: 1001cea2:	0f 84 65 01 00 00    	je     0x1001d00d
+L38983: 1001cea8:	8b 74 24 0c          	mov    esi,DWORD PTR [esp+0xc]
+L38984: 1001ceac:	6a 08                	push   0x8
+L38985: 1001ceae:	56                   	push   esi
+L38986: 1001ceaf:	ff 15 f4 a1 02 10    	call   DWORD PTR ds:0x1002a1f4
+L38987: 1001ceb5:	6a 01                	push   0x1
+L38988: 1001ceb7:	8d 54 24 10          	lea    edx,[esp+0x10]
+L38989: 1001cebb:	52                   	push   edx
+L38990: 1001cebc:	68 47 04 00 00       	push   0x447
+L38991: 1001cec1:	56                   	push   esi
+L38992: 1001cec2:	8b f8                	mov    edi,eax
+L38993: 1001cec4:	ff 15 9c a1 02 10    	call   DWORD PTR ds:0x1002a19c
+L38994: 1001ceca:	83 7c 24 0c 00       	cmp    DWORD PTR [esp+0xc],0x0
+L38995: 1001cecf:	0f 84 38 01 00 00    	je     0x1001d00d
+L38996: 1001ced5:	3d e8 03 00 00       	cmp    eax,0x3e8
+L38997: 1001ceda:	7e 17                	jle    0x1001cef3
+L38998: 1001cedc:	b8 e8 03 00 00       	mov    eax,0x3e8
+L38999: 1001cee1:	8d 04 80             	lea    eax,[eax+eax*4]
+L39000: 1001cee4:	03 c0                	add    eax,eax
+L39001: 1001cee6:	89 87 bc 00 00 00    	mov    DWORD PTR [edi+0xbc],eax
+L39002: 1001ceec:	5f                   	pop    edi
+L39003: 1001ceed:	33 c0                	xor    eax,eax
+L39004: 1001ceef:	5e                   	pop    esi
+L39005: 1001cef0:	c2 10 00             	ret    0x10
+L39006: 1001cef3:	85 c0                	test   eax,eax
+L39007: 1001cef5:	7d 02                	jge    0x1001cef9
+L39008: 1001cef7:	33 c0                	xor    eax,eax
+L39009: 1001cef9:	8d 04 80             	lea    eax,[eax+eax*4]
+L39010: 1001cefc:	03 c0                	add    eax,eax
+L39011: 1001cefe:	89 87 bc 00 00 00    	mov    DWORD PTR [edi+0xbc],eax
+L39012: 1001cf04:	5f                   	pop    edi
+L39013: 1001cf05:	33 c0                	xor    eax,eax
+L39014: 1001cf07:	5e                   	pop    esi
+L39015: 1001cf08:	c2 10 00             	ret    0x10
+L39016: 1001cf0b:	80 3d 1f 55 03 10 00 	cmp    BYTE PTR ds:0x1003551f,0x0
+L39017: 1001cf12:	0f 84 f5 00 00 00    	je     0x1001d00d
+L39018: 1001cf18:	8b 74 24 0c          	mov    esi,DWORD PTR [esp+0xc]
+L39019: 1001cf1c:	6a 08                	push   0x8
+L39020: 1001cf1e:	56                   	push   esi
+L39021: 1001cf1f:	ff 15 f4 a1 02 10    	call   DWORD PTR ds:0x1002a1f4
+L39022: 1001cf25:	6a 01                	push   0x1
+L39023: 1001cf27:	8d 4c 24 10          	lea    ecx,[esp+0x10]
+L39024: 1001cf2b:	51                   	push   ecx
+L39025: 1001cf2c:	68 45 04 00 00       	push   0x445
+L39026: 1001cf31:	56                   	push   esi
+L39027: 1001cf32:	8b f8                	mov    edi,eax
+L39028: 1001cf34:	ff 15 9c a1 02 10    	call   DWORD PTR ds:0x1002a19c
+L39029: 1001cf3a:	83 7c 24 0c 00       	cmp    DWORD PTR [esp+0xc],0x0
+L39030: 1001cf3f:	0f 84 c8 00 00 00    	je     0x1001d00d
+L39031: 1001cf45:	83 f8 63             	cmp    eax,0x63
+L39032: 1001cf48:	7e 0f                	jle    0x1001cf59
+L39033: 1001cf4a:	b8 63 00 00 00       	mov    eax,0x63
+L39034: 1001cf4f:	89 47 4c             	mov    DWORD PTR [edi+0x4c],eax
+L39035: 1001cf52:	5f                   	pop    edi
+L39036: 1001cf53:	33 c0                	xor    eax,eax
+L39037: 1001cf55:	5e                   	pop    esi
+L39038: 1001cf56:	c2 10 00             	ret    0x10
+L39039: 1001cf59:	83 f8 01             	cmp    eax,0x1
+L39040: 1001cf5c:	7d 05                	jge    0x1001cf63
+L39041: 1001cf5e:	b8 01 00 00 00       	mov    eax,0x1
+L39042: 1001cf63:	89 47 4c             	mov    DWORD PTR [edi+0x4c],eax
+L39043: 1001cf66:	5f                   	pop    edi
+L39044: 1001cf67:	33 c0                	xor    eax,eax
+L39045: 1001cf69:	5e                   	pop    esi
+L39046: 1001cf6a:	c2 10 00             	ret    0x10
+L39047: 1001cf6d:	8b 74 24 0c          	mov    esi,DWORD PTR [esp+0xc]
+L39048: 1001cf71:	53                   	push   ebx
+L39049: 1001cf72:	8b 5c 24 1c          	mov    ebx,DWORD PTR [esp+0x1c]
+L39050: 1001cf76:	53                   	push   ebx
+L39051: 1001cf77:	6a 08                	push   0x8
+L39052: 1001cf79:	56                   	push   esi
+L39053: 1001cf7a:	ff 15 fc a1 02 10    	call   DWORD PTR ds:0x1002a1fc
+L39054: 1001cf80:	8b 3d a8 a1 02 10    	mov    edi,DWORD PTR ds:0x1002a1a8
+L39055: 1001cf86:	68 63 00 01 00       	push   0x10063
+L39056: 1001cf8b:	6a 00                	push   0x0
+L39057: 1001cf8d:	68 65 04 00 00       	push   0x465
+L39058: 1001cf92:	68 46 04 00 00       	push   0x446
+L39059: 1001cf97:	56                   	push   esi
+L39060: 1001cf98:	ff d7                	call   edi
+L39061: 1001cf9a:	8b 43 4c             	mov    eax,DWORD PTR [ebx+0x4c]
+L39062: 1001cf9d:	83 f8 01             	cmp    eax,0x1
+L39063: 1001cfa0:	7d 05                	jge    0x1001cfa7
+L39064: 1001cfa2:	b8 01 00 00 00       	mov    eax,0x1
+L39065: 1001cfa7:	0f b7 d0             	movzx  edx,ax
+L39066: 1001cfaa:	52                   	push   edx
+L39067: 1001cfab:	6a 00                	push   0x0
+L39068: 1001cfad:	68 67 04 00 00       	push   0x467
+L39069: 1001cfb2:	68 46 04 00 00       	push   0x446
+L39070: 1001cfb7:	56                   	push   esi
+L39071: 1001cfb8:	ff d7                	call   edi
+L39072: 1001cfba:	68 e8 03 00 00       	push   0x3e8
+L39073: 1001cfbf:	6a 00                	push   0x0
+L39074: 1001cfc1:	68 65 04 00 00       	push   0x465
+L39075: 1001cfc6:	68 48 04 00 00       	push   0x448
+L39076: 1001cfcb:	56                   	push   esi
+L39077: 1001cfcc:	ff d7                	call   edi
+L39078: 1001cfce:	8b 8b bc 00 00 00    	mov    ecx,DWORD PTR [ebx+0xbc]
+L39079: 1001cfd4:	b8 67 66 66 66       	mov    eax,0x66666667
+L39080: 1001cfd9:	f7 e9                	imul   ecx
+L39081: 1001cfdb:	c1 fa 02             	sar    edx,0x2
+L39082: 1001cfde:	8b c2                	mov    eax,edx
+L39083: 1001cfe0:	c1 e8 1f             	shr    eax,0x1f
+L39084: 1001cfe3:	03 c2                	add    eax,edx
+L39085: 1001cfe5:	b9 00 00 00 00       	mov    ecx,0x0
+L39086: 1001cfea:	0f 98 c1             	sets   cl
+L39087: 1001cfed:	83 e9 01             	sub    ecx,0x1
+L39088: 1001cff0:	23 c1                	and    eax,ecx
+L39089: 1001cff2:	0f b7 d0             	movzx  edx,ax
+L39090: 1001cff5:	52                   	push   edx
+L39091: 1001cff6:	6a 00                	push   0x0
+L39092: 1001cff8:	68 67 04 00 00       	push   0x467
+L39093: 1001cffd:	68 48 04 00 00       	push   0x448
+L39094: 1001d002:	56                   	push   esi
+L39095: 1001d003:	ff d7                	call   edi
+L39096: 1001d005:	c6 05 1f 55 03 10 01 	mov    BYTE PTR ds:0x1003551f,0x1
+L39097: 1001d00c:	5b                   	pop    ebx
+L39098: 1001d00d:	5f                   	pop    edi
+L39099: 1001d00e:	33 c0                	xor    eax,eax
+L39100: 1001d010:	5e                   	pop    esi

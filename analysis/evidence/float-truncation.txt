@@ -1,0 +1,55 @@
+L46381: 10022880:	83 3d 40 55 03 10 00 	cmp    DWORD PTR ds:0x10035540,0x0
+L46382: 10022887:	74 2d                	je     0x100228b6
+L46383: 10022889:	55                   	push   ebp
+L46384: 1002288a:	8b ec                	mov    ebp,esp
+L46385: 1002288c:	83 ec 08             	sub    esp,0x8
+L46386: 1002288f:	83 e4 f8             	and    esp,0xfffffff8
+L46387: 10022892:	dd 1c 24             	fstp   QWORD PTR [esp]
+L46388: 10022895:	f2 0f 2c 04 24       	cvttsd2si eax,QWORD PTR [esp]
+L46389: 1002289a:	c9                   	leave
+L46390: 1002289b:	c3                   	ret
+L46391: 1002289c:	83 3d 40 55 03 10 00 	cmp    DWORD PTR ds:0x10035540,0x0
+L46392: 100228a3:	74 11                	je     0x100228b6
+L46393: 100228a5:	83 ec 04             	sub    esp,0x4
+L46394: 100228a8:	d9 3c 24             	fnstcw WORD PTR [esp]
+L46395: 100228ab:	58                   	pop    eax
+L46396: 100228ac:	66 83 e0 7f          	and    ax,0x7f
+L46397: 100228b0:	66 83 f8 7f          	cmp    ax,0x7f
+L46398: 100228b4:	74 d3                	je     0x10022889
+L46399: 100228b6:	55                   	push   ebp
+L46400: 100228b7:	8b ec                	mov    ebp,esp
+L46401: 100228b9:	83 ec 20             	sub    esp,0x20
+L46402: 100228bc:	83 e4 f0             	and    esp,0xfffffff0
+L46403: 100228bf:	d9 c0                	fld    st(0)
+L46404: 100228c1:	d9 54 24 18          	fst    DWORD PTR [esp+0x18]
+L46405: 100228c5:	df 7c 24 10          	fistp  QWORD PTR [esp+0x10]
+L46406: 100228c9:	df 6c 24 10          	fild   QWORD PTR [esp+0x10]
+L46407: 100228cd:	8b 54 24 18          	mov    edx,DWORD PTR [esp+0x18]
+L46408: 100228d1:	8b 44 24 10          	mov    eax,DWORD PTR [esp+0x10]
+L46409: 100228d5:	85 c0                	test   eax,eax
+L46410: 100228d7:	74 3c                	je     0x10022915
+L46411: 100228d9:	de e9                	fsubp  st(1),st
+L46412: 100228db:	85 d2                	test   edx,edx
+L46413: 100228dd:	79 1e                	jns    0x100228fd
+L46414: 100228df:	d9 1c 24             	fstp   DWORD PTR [esp]
+L46415: 100228e2:	8b 0c 24             	mov    ecx,DWORD PTR [esp]
+L46416: 100228e5:	81 f1 00 00 00 80    	xor    ecx,0x80000000
+L46417: 100228eb:	81 c1 ff ff ff 7f    	add    ecx,0x7fffffff
+L46418: 100228f1:	83 d0 00             	adc    eax,0x0
+L46419: 100228f4:	8b 54 24 14          	mov    edx,DWORD PTR [esp+0x14]
+L46420: 100228f8:	83 d2 00             	adc    edx,0x0
+L46421: 100228fb:	eb 2c                	jmp    0x10022929
+L46422: 100228fd:	d9 1c 24             	fstp   DWORD PTR [esp]
+L46423: 10022900:	8b 0c 24             	mov    ecx,DWORD PTR [esp]
+L46424: 10022903:	81 c1 ff ff ff 7f    	add    ecx,0x7fffffff
+L46425: 10022909:	83 d8 00             	sbb    eax,0x0
+L46426: 1002290c:	8b 54 24 14          	mov    edx,DWORD PTR [esp+0x14]
+L46427: 10022910:	83 da 00             	sbb    edx,0x0
+L46428: 10022913:	eb 14                	jmp    0x10022929
+L46429: 10022915:	8b 54 24 14          	mov    edx,DWORD PTR [esp+0x14]
+L46430: 10022919:	f7 c2 ff ff ff 7f    	test   edx,0x7fffffff
+L46431: 1002291f:	75 b8                	jne    0x100228d9
+L46432: 10022921:	d9 5c 24 18          	fstp   DWORD PTR [esp+0x18]
+L46433: 10022925:	d9 5c 24 18          	fstp   DWORD PTR [esp+0x18]
+L46434: 10022929:	c9                   	leave
+L46435: 1002292a:	c3                   	ret

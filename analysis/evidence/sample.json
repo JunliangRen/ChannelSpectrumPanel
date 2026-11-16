@@ -1,0 +1,36 @@
+{
+  "source": "foo_uie_vis_channel_spectrum.dll",
+  "size": 241664,
+  "sha256": "e5bc0405fd9da2a59d9889fffc6fc21f8e9da71dc972d68c5e5218794a038c4b",
+  "image_base": "0x10000000",
+  "machine": "0x14c",
+  "version_string": "0.17.2",
+  "method": "PE resources and x86 disassembly; DLL not loaded or executed",
+  "sections": [
+    {
+      "name": ".text",
+      "rva": "0x1000",
+      "size": 167936
+    },
+    {
+      "name": ".rdata",
+      "rva": "0x2a000",
+      "size": 36864
+    },
+    {
+      "name": ".data",
+      "rva": "0x33000",
+      "size": 8192
+    },
+    {
+      "name": ".rsrc",
+      "rva": "0x37000",
+      "size": 8192
+    },
+    {
+      "name": ".reloc",
+      "rva": "0x39000",
+      "size": 16384
+    }
+  ]
+}

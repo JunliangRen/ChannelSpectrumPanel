@@ -1,0 +1,102 @@
+VA	UTF-16LE label
+0x100371de	Config
+0x100371f2	MS Shell Dlg
+0x1003724c	Cancel
+0x10037278	ForeGround1
+0x100372b0	BackGround
+0x100372e4	Show Peaks
+0x10037338	Edge style:
+0x1003738c	msctls_updown32
+0x100373cc	Bar width:
+0x10037400	Peak
+0x10037448	Color Mode:
+0x10037480	Logarithm scale
+0x100374c0	ForeGround2
+0x10037514	msctls_updown32
+0x10037554	Refresh interval:
+0x100375b8	FFT size:
+0x100375ec	Transparent background
+0x10037638	Bar mode
+0x10037668	Fast pseudo-transparent mode
+0x100376c0	Reverse freq-axis
+0x10037724	Channel Mode:
+0x100377a0	Rotate:
+0x100377d0	Reverse channel-pos
+0x10037834	msctls_updown32
+0x10037874	Range scale :
+0x100378cc	msctls_updown32
+0x1003790c	Spacing :
+0x1003795c	msctls_updown32
+0x1003799c	Blur level:
+0x100379d4	freq
+0x10037a24	Apply
+0x10037a50	Import
+0x10037a7c	Export
+0x10037aa8	Reset
+0x10037ad4	Linear scale (frequency)
+0x10037b4c	Show tics:
+0x10037b80	Tics
+0x10037bd0	Sync with scanline
+0x10037c64	Padding :
+0x10037ce0	FFT mode:
+0x10037d1e	MS Shell Dlg
+0x10037d56	Color Setting
+0x10037d78	MS Shell Dlg
+0x10037dd4	Cancel
+0x10037e00	ForeGround3
+0x10037e38	ForeGround5
+0x10037e70	ForeGround4
+0x10037ea8	ForeGround6
+0x10037ee0	ForeGround7
+0x10037f18	Use foreground settings
+0x10037f68	ForeGround8
+0x10037fa0	ForeGround1
+0x10037fd8	ForeGround2
+0x10038010	APPLY
+0x1003803c	ForeGround3
+0x10038074	ForeGround5
+0x100380ac	ForeGround4
+0x100380e4	ForeGround6
+0x1003811c	ForeGround7
+0x10038154	Use background settings
+0x100381a4	ForeGround8
+0x100381dc	BackGround1
+0x10038214	ForeGround2
+0x1003824e	Padding Setting
+0x10038274	MS Shell Dlg
+0x100382d0	Cancel
+0x100382fc	APPLY
+0x10038344	msctls_updown32
+0x10038384	Left padding:
+0x100383dc	msctls_updown32
+0x1003841c	Right padding:
+0x1003845a	Channel Setting
+0x10038480	MS Shell Dlg
+0x100384dc	Cancel
+0x10038508	APPLY
+0x10038558	Down
+0x1003857c	SysListView32
+0x100385d8	Direction:
+0x10038628	msctls_updown32
+0x10038668	Padding:
+0x1003869a	Peak Setting
+0x100386ba	MS Shell Dlg
+0x10038714	Cancel
+0x10038740	APPLY
+0x10038788	msctls_updown32
+0x100387c8	Fall speed:
+0x1003881c	msctls_updown32
+0x1003885c	Hold time[10ms]:
+0x1003889e	Tics Setting
+0x100388be	MS Shell Dlg
+0x10038918	Cancel
+0x10038944	APPLY
+0x1003898c	msctls_updown32
+0x100389cc	Short tics length:
+0x10038a2c	msctls_updown32
+0x10038a6c	Long tics length:
+0x10038acc	msctls_updown32
+0x10038b0c	Short tics length:
+0x10038b6c	msctls_updown32
+0x10038bac	Long tics length:
+0x10038bf0	freq

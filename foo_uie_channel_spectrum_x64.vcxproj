@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+ <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration></ItemGroup>
+ <PropertyGroup Label="Globals"><ProjectGuid>{E58108CF-C4A3-42EF-B3F6-CAFA84B1A5E3}</ProjectGuid><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+ <PropertyGroup Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><PlatformToolset>v143</PlatformToolset><CharacterSet>Unicode</CharacterSet></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+ <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+ <PropertyGroup><OutDir>$(MSBuildThisFileDirectory)dist\</OutDir><IntDir>$(MSBuildThisFileDirectory)build\plugin\</IntDir><TargetName>foo_uie_channel_spectrum_x64</TargetName></PropertyGroup>
+ <ItemDefinitionGroup>
+  <ClCompile><WarningLevel>Level4</WarningLevel><Optimization>MaxSpeed</Optimization><LanguageStandard>stdcpp20</LanguageStandard><RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary><ExceptionHandling>Sync</ExceptionHandling><PrecompiledHeader>NotUsing</PrecompiledHeader><AdditionalIncludeDirectories>$(ProjectDir)vendor;$(ProjectDir)vendor\foobar2000;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories><PreprocessorDefinitions>WIN32;_WINDOWS;_WINDLL;NDEBUG;UNICODE;_UNICODE;NOMINMAX;CUI_SDK_DWRITE_ENABLED=0;%(PreprocessorDefinitions)</PreprocessorDefinitions><AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions><DebugInformationFormat>ProgramDatabase</DebugInformationFormat></ClCompile>
+  <Link><SubSystem>Windows</SubSystem><GenerateDebugInformation>true</GenerateDebugInformation><AdditionalDependencies>$(ProjectDir)vendor\foobar2000\shared\shared-x64.lib;msimg32.lib;user32.lib;gdi32.lib;shlwapi.lib;ole32.lib;comdlg32.lib;dxguid.lib;winmm.lib;uxtheme.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
+ </ItemDefinitionGroup>
+ <ItemGroup><ClCompile Include="src\panel.cpp" /><ClCompile Include="vendor\columns_ui-sdk\ui_extension.cpp" /><ResourceCompile Include="src\settings.rc" /></ItemGroup>
+ <ItemGroup>
+  <ProjectReference Include="vendor\pfc\pfc.vcxproj"><Project>{EBFFFB4E-261D-44D3-B89C-957B31A0BF9C}</Project></ProjectReference>
+  <ProjectReference Include="vendor\foobar2000\SDK\foobar2000_SDK.vcxproj"><Project>{E8091321-D79D-4575-86EF-064EA1A4A20D}</Project></ProjectReference>
+  <ProjectReference Include="vendor\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj"><Project>{71AD2674-065B-48F5-B8B0-E1F9D3892081}</Project></ProjectReference>
+ </ItemGroup>
+ <ItemGroup><MASM Include="src\mapping_x87.asm" /></ItemGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+ <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+</Project>

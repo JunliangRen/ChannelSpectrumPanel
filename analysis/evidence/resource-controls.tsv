@@ -1,0 +1,132 @@
+dialog_id	control_id	class	text	x	y
+108	DIALOG		Config	0	0
+108	0x1	#128	OK	102	231
+108	0x2	#128	Cancel	186	231
+108	0x42b	#128	ForeGround1	40	7
+108	0x42c	#128	BackGround	40	35
+108	0x42d	#128	Show Peaks	14	78
+108	0x3ff	#133		164	26
+108	0xffffffff	#130	Edge style:	122	28
+108	0x42f	#129		168	9
+108	0x42e	msctls_updown32		196	9
+108	0xffffffff	#130	Bar width:	125	11
+108	0x430	#128	Peak	40	49
+108	0x400	#133		164	44
+108	0xffffffff	#130	Color Mode:	120	46
+108	0x432	#128	Logarithm scale	14	175
+108	0x433	#128	ForeGround2	40	21
+108	0x434	#129		78	116
+108	0x435	msctls_updown32		106	116
+108	0xffffffff	#130	Refresh interval:	15	118
+108	0x401	#133		161	103
+108	0xffffffff	#130	FFT size:	129	106
+108	0x438	#128	Transparent background	14	203
+108	0x439	#128	Bar mode	140	175
+108	0x43a	#128	Fast pseudo-transparent mode	23	215
+108	0x43b	#128	Reverse freq-axis	140	189
+108	0x402	#133		164	63
+108	0xffffffff	#130	Channel Mode:	111	65
+108	0x403	#133		150	81
+108	0x404	#133		161	135
+108	0xffffffff	#130	Rotate:	133	137
+108	0x43c	#128	Reverse channel-pos	140	203
+108	0x43d	#129		78	131
+108	0x43e	msctls_updown32		106	131
+108	0xffffffff	#130	Range scale :	15	133
+108	0x43f	#129		78	146
+108	0x440	msctls_updown32		106	146
+108	0xffffffff	#130	Spacing :	29	148
+108	0x441	#129		174	155
+108	0x442	msctls_updown32		202	155
+108	0xffffffff	#130	Blur level:	129	157
+108	0x431	#128	freq	57	91
+108	0x443	#128	...	94	22
+108	0x3	#128	Apply	144	231
+108	0x4	#128	Import	35	231
+108	0x5	#128	Export	63	231
+108	0x6	#128	Reset	7	231
+108	0x444	#128	Linear scale (frequency)	14	189
+108	0x445	#128	amp	57	103
+108	0xffffffff	#130	Show tics:	15	97
+108	0x446	#128	Tics	40	63
+108	0x447	#128	...	92	78
+108	0x448	#128	Sync with scanline	140	217
+108	0x449	#128	...	125	83
+108	0x44a	#128	...	78	163
+108	0xffffffff	#130	Padding :	29	163
+108	0x44b	#128	...	92	97
+108	0x405	#133		161	119
+108	0xffffffff	#130	FFT mode:	123	121
+111	DIALOG			0	0
+114	DIALOG		Color Setting	0	0
+114	0x1	#128	OK	72	141
+114	0x2	#128	Cancel	152	141
+114	0x431	#128	ForeGround3	42	50
+114	0x433	#128	ForeGround5	42	80
+114	0x432	#128	ForeGround4	42	65
+114	0x434	#128	ForeGround6	42	95
+114	0x435	#128	ForeGround7	42	110
+114	0x436	#128	Use foreground settings	7	7
+114	0x437	#128	ForeGround8	42	125
+114	0x438	#128	ForeGround1	42	20
+114	0x439	#128	ForeGround2	42	35
+114	0x444	#128	APPLY	112	141
+114	0x43a	#128	ForeGround3	123	50
+114	0x44e	#128	ForeGround5	123	80
+114	0x44f	#128	ForeGround4	123	65
+114	0x450	#128	ForeGround6	123	95
+114	0x451	#128	ForeGround7	123	110
+114	0x452	#128	Use background settings	102	7
+114	0x453	#128	ForeGround8	123	125
+114	0x454	#128	BackGround1	123	20
+114	0x455	#128	ForeGround2	123	35
+115	DIALOG		Padding Setting	0	0
+115	0x1	#128	OK	72	44
+115	0x2	#128	Cancel	152	44
+115	0x444	#128	APPLY	112	44
+115	0x44c	#129		80	7
+115	0x44d	msctls_updown32		111	7
+115	0xffffffff	#130	Left padding:	17	8
+115	0x44e	#129		80	24
+115	0x44f	msctls_updown32		111	24
+115	0xffffffff	#130	Right padding:	17	24
+116	DIALOG		Channel Setting	0	0
+116	0x1	#128	OK	74	146
+116	0x2	#128	Cancel	154	146
+116	0x444	#128	APPLY	114	146
+116	0x448	#128	Up	119	114
+116	0x449	#128	Down	157	114
+116	0x44a	SysListView32		7	7
+116	0x44b	#133		44	115
+116	0xffffffff	#130	Direction:	7	117
+116	0x450	#129		45	130
+116	0x451	msctls_updown32		73	130
+116	0xffffffff	#130	Padding:	7	132
+117	DIALOG		Peak Setting	0	0
+117	0x1	#128	OK	72	44
+117	0x2	#128	Cancel	152	44
+117	0x444	#128	APPLY	112	44
+117	0x445	#129		80	7
+117	0x446	msctls_updown32		111	7
+117	0xffffffff	#130	Fall speed:	36	8
+117	0x447	#129		80	24
+117	0x448	msctls_updown32		111	24
+117	0xffffffff	#130	Hold time[10ms]:	17	24
+118	DIALOG		Tics Setting	0	0
+118	0x1	#128	OK	78	93
+118	0x2	#128	Cancel	158	93
+118	0x444	#128	APPLY	118	93
+118	0x452	#129		98	15
+118	0x454	msctls_updown32		129	15
+118	0xffffffff	#130	Short tics length:	17	16
+118	0x453	#129		98	32
+118	0x455	msctls_updown32		129	32
+118	0xffffffff	#130	Long tics length:	17	32
+118	0x456	#129		98	57
+118	0x457	msctls_updown32		129	57
+118	0xffffffff	#130	Short tics length:	17	58
+118	0x458	#129		98	74
+118	0x459	msctls_updown32		129	74
+118	0xffffffff	#130	Long tics length:	17	74
+118	0xffffffff	#128	freq	7	7
+118	0xffffffff	#128	amp	7	50

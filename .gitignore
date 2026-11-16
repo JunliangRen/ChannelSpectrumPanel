@@ -1,0 +1,45 @@
+# Downloaded SDKs, analysis runtimes, and local tools
+/vendor/
+/spectrum-static-tools/
+/tools/
+
+# Build output, packages, portable test player, logs and previews
+/build/
+/dist/
+/.vs/
+/x64/
+/Debug/
+/Release/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+*.obj
+*.pch
+*.pdb
+*.ilk
+*.tlog
+*.log
+*.dll
+*.exe
+*.fb2k-component
+
+# Reproducible raw analysis output; retain compact test fixtures and evidence
+/channel-spectrum-disassembly.txt
+/analysis/evidence/original-coordinate-oracle.json
+
+# Local Python caches and environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local secrets and editor/OS files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.vscode/
+.DS_Store
+Thumbs.db
