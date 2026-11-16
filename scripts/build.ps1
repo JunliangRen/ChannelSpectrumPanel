@@ -1,21 +1,31 @@
-param([string]$MSBuild, [ValidateSet('all','x86','x64')][string]$Architecture = 'all')
+param([string]$MSBuild, [ValidateSet('all','x86','x64','arm64ec')][string]$Architecture = 'all')
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 if (!$MSBuild) {
     $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
     $MSBuild = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
 }
-if (!$MSBuild -or !(Test-Path -LiteralPath $MSBuild)) { throw 'MSBuild not found. Install Visual Studio C++ tools with v143, or pass -MSBuild.' }
+if (!$MSBuild -or !(Test-Path -LiteralPath $MSBuild)) { throw 'MSBuild not found. Install Visual Studio C++ tools with v143 (x86/x64 and ARM64/ARM64EC), or pass -MSBuild.' }
 Push-Location $root
 try {
-    $architectures = if ($Architecture -eq 'all') { @('x86','x64') } else { @($Architecture) }
+    $architectures = if ($Architecture -eq 'all') { @('x86','x64','arm64ec') } else { @($Architecture) }
     foreach ($arch in $architectures) {
-        $platform = if ($arch -eq 'x86') { 'Win32' } else { 'x64' }
+        $platform = if ($arch -eq 'x86') { 'Win32' } elseif ($arch -eq 'arm64ec') { 'ARM64EC' } else { 'x64' }
+        if ($arch -eq 'arm64ec') {
+            $armTools = ((& $MSBuild foo_uie_channel_spectrum_x64.vcxproj /p:Configuration=Release /p:Platform=ARM64EC -getProperty:VCToolsInstallDir /nologo) -join '').Trim()
+            if (!$armTools -or !(Test-Path -LiteralPath (Join-Path $armTools 'bin/Hostx64/arm64/cl.exe'))) {
+                throw 'ARM64EC tools are missing. Install Visual Studio v143 ARM64/ARM64EC build tools, then rerun. No ARM package was produced.'
+            }
+        }
         New-Item -ItemType Directory -Force "build/$arch","dist/$arch" | Out-Null
         & $MSBuild foo_uie_channel_spectrum_x64.vcxproj /m /p:Configuration=Release "/p:Platform=$platform" /p:PreferredToolArchitecture=x64 /v:quiet /nologo /fl "/flp:logfile=build/$arch/build.log;verbosity=normal"
         if ($LASTEXITCODE) { throw "$arch plugin build failed." }
         & $MSBuild tests/core_tests.vcxproj /m /p:Configuration=Release "/p:Platform=$platform" /p:PreferredToolArchitecture=x64 /v:quiet /nologo
         if ($LASTEXITCODE) { throw "$arch test build failed." }
+        if ($arch -eq 'arm64ec' -and [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne 'Arm64') {
+            Write-Host 'ARM64EC plugin and tests compiled; runtime tests require Windows on ARM and were NOT run.'
+            continue
+        }
         foreach ($style in 0,1,2) {
             & "./build/$arch/tests/core_tests.exe" "build/$arch/preview-$style.bmp" $style "build/$arch/oracle-differences.txt" | Tee-Object "build/$arch/tests-$style.log"
             if ($LASTEXITCODE) { throw "$arch style $style core tests failed." }
@@ -27,7 +37,7 @@ try {
             $x64 = (Get-FileHash "build/x64/preview-$style.bmp" -Algorithm SHA256).Hash
             if ($x86 -ne $x64) { throw "Cross-architecture preview mismatch for style $style." }
         }
-        Write-Host 'Cross-architecture synthetic previews match byte for byte.'
+        Write-Host 'x86/x64 synthetic previews match byte for byte.'
     }
     foreach ($arch in $architectures) { & "$PSScriptRoot/package.ps1" -Architecture $arch }
 } finally { Pop-Location }

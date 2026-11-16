@@ -42,7 +42,7 @@ inline bool encode_original_csp(const Settings& s,std::vector<uint32_t>& words){
     std::array<uint32_t,77> fields{};auto put=[&](unsigned offset,uint32_t value){fields[offset/4]=value;};
     auto color=[](uint32_t rgb){return ((rgb&255)<<16)|(rgb&0xff00)|((rgb>>16)&255);};
     put(8,color(s.foreground));put(0xc,color(s.foreground2));put(0x28,color(s.background));put(0x2c,color(s.peak_color));
-    put(0x30,s.edge);put(0x34,s.show_peaks);put(0x38,s.width);put(0x3c,s.interval);put(0x40,mode);put(0x44,s.log_amplitude);
+    put(0x30,s.edge);put(0x34,s.show_peaks);put(0x38,s.width);put(0x3c,unsigned(std::clamp(std::lround(s.refresh_ms()),5l,100l)));put(0x40,mode);put(0x44,s.log_amplitude);
     put(0x48,s.fft);put(0x4c,s.fall);put(0x50,unsigned(s.transparent)|(unsigned(s.fast_transparent)<<1));put(0x58,s.segmented);
     put(0x5c,s.channel_mode);put(0x60,s.reverse_frequency);put(0x64,s.selected);put(0x68,s.rotation);put(0x6c,s.reverse_channels);
     put(0x70,s.range);put(0x74,s.spacing);put(0x78,s.blur);put(0x7c,s.frequency_ticks);put(0x80,s.foreground_palette);

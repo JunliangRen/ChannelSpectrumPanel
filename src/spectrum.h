@@ -3,11 +3,21 @@
 #include <array>
 #include <bit>
 #include <cmath>
+#include <cfenv>
 #include <cstdint>
 #include <span>
+#include <string_view>
 #include <vector>
 
 namespace csp {
+inline unsigned parse_target_fps(std::wstring_view text) noexcept {
+    while(!text.empty() && text.front()==L' ')text.remove_prefix(1);
+    while(!text.empty() && text.back()==L' ')text.remove_suffix(1);
+    if(text.empty() || text.size()>3)return 0;
+    unsigned value=0;
+    for(wchar_t ch:text){if(ch<L'0' || ch>L'9')return 0;value=value*10+unsigned(ch-L'0');}
+    return value>=10 && value<=200?value:0;
+}
 enum class Style : unsigned { GradientBars, SimpleLine, SeparateLines, Simple, Horizontal, Vertical, SimpleAntialias, HorizontalAntialias };
 struct Settings {
     unsigned fft = 2048, interval = 14, fall = 10, hold = 0, range = 100;
@@ -26,6 +36,13 @@ struct Settings {
     bool foreground_palette=false,background_palette=false;
     std::array<uint32_t,8> foreground_colors={0x202020,0x3c3c3c,0x585858,0x747474,0x909090,0xacacac,0xc8c8c8,0xe4e4e4};
     std::array<uint32_t,8> background_colors={0,0,0,0,0,0,0,0};
+    // Keep the format-4 storage unit for compatibility; effective FPS is integer-only.
+    // Zero derives rounded FPS from the legacy animation interval.
+    unsigned fps_milli=0;
+    bool follow_monitor=false;
+    bool direct2d=false;
+    unsigned target_fps() const {return fps_milli?(std::clamp(fps_milli,10000u,200000u)+500)/1000:unsigned(std::lround(1000.0/std::clamp(interval,5u,100u)));}
+    double refresh_ms() const {return 1000.0/target_fps();}
     bool operator==(const Settings&) const = default;
     void sanitize() {
         if (unsigned(style)>7) style=Style::GradientBars;
@@ -39,6 +56,7 @@ struct Settings {
         std::array<bool,18> seen{};bool valid=true;for(auto n:order){if(n>=18 || seen[n]){valid=false;break;}seen[n]=true;}
         if(!valid)for(unsigned i=0;i<18;++i)order[i]=i;
         interval = std::clamp(interval, 5u, 100u);
+        if(fps_milli)fps_milli=target_fps()*1000;
         fall = std::clamp(fall, 1u, 99u);
         hold = std::min(hold, 10000u);
         range = std::clamp(range, 1u, 1000u);
@@ -79,13 +97,20 @@ struct Peak {
     int64_t position = 0, velocity = 0;
     uint32_t touched = 0;
     bool initialized = false;
+    uint64_t applied_steps=0;
     void update(int y, uint32_t now, const Settings& s, int bottom) {
         const int64_t target = int64_t(y)*256;
         const int64_t acceleration = int64_t(128.0*s.fall*s.interval/(500-s.interval));
         if (!initialized || position >= target) {
-            position = target; velocity = acceleration; touched = now; initialized = true;
+            position = target; velocity = acceleration; touched = now; initialized = true; applied_steps=0;
         } else if (uint32_t(now-touched) >= s.hold) {
-            position += velocity; velocity += acceleration;
+            const uint32_t age=now-touched;
+            const uint64_t steps=s.hold?1+(age-s.hold)/s.interval:age/s.interval;
+            const uint64_t count=steps>applied_steps?steps-applied_steps:0;
+            // Closed-form legacy steps: independent of render frequency, no catch-up loop.
+            const double next=double(position)+double(count)*double(velocity)+double(acceleration)*double(count)*double(count?count-1:0)/2;
+            position=int64_t(std::min(next,double(bottom)*256));
+            velocity+=int64_t(count)*acceleration;applied_steps=steps;
             // Off-screen saturation prevents unbounded state after prolonged silence.
             position = std::min(position, int64_t(bottom)*256);
         }
@@ -98,7 +123,22 @@ struct Bar { int left, right, top, peak; unsigned channel=0; double level=0; };
 struct Descriptor { int left,draw,right,baseline; bool operator==(const Descriptor&) const=default; };
 struct MappingInput {int bin,anchor,bins,extent,rounded_previous;};
 struct MappingOutput {int previous,current,wide;};
+// ARM has no x87 extended precision. Keep the same mapping formula in double.
+inline void portable_mapping_coordinates(const MappingInput* input,MappingOutput* output){
+    const int rounding=std::fegetround();std::fesetround(FE_TONEAREST);
+    const double d=input->bins-1.;
+    const auto q=[&](int k){return 1024.*std::log1p(1024.*k/d)/std::log(1025.);};
+    const double anchor=q(input->anchor),t=std::max(double(input->anchor),input->extent*double(input->anchor)/d);
+    const auto interpolate=[&](int k){return t+(q(k)-anchor)*(input->extent-t)/(1024.-anchor);};
+    const double previous=interpolate(input->bin-1),current=interpolate(input->bin);
+    *output={int(previous),int(current),std::abs(current-previous)>1.};
+    if(rounding!=-1)std::fesetround(rounding);
+}
+#if defined(_M_ARM64EC) || defined(_M_ARM64) || defined(CSP_PORTABLE_MAPPING)
+inline void csp_mapping_coordinates(const MappingInput* input,MappingOutput* output){portable_mapping_coordinates(input,output);}
+#else
 extern "C" void csp_mapping_coordinates(const MappingInput*,MappingOutput*);
+#endif
 inline std::vector<Descriptor> frequency_descriptors(int extent,unsigned bins,int pitch,int spacing,bool increasing,bool linear,int baseline,bool rounded_previous=false) {
     std::vector<Descriptor> out;out.reserve(bins);
     if(extent<=0 || bins<2 || pitch<1)return out;

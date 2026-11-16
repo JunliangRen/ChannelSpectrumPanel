@@ -4,15 +4,19 @@
 #include <bit>
 #include "spectrum.h"
 #include "render.h"
+#include "d2d_render.h"
 #include "settings_ui.h"
 #include "scanline.h"
+#include "frame_timer.h"
 #include "runtime_state.h"
 #include <uxtheme.h>
 
-DECLARE_COMPONENT_VERSION("Channel Spectrum Mirror", "0.5.1",
-    "Columns UI stereo spectrum for x86 and x64. Independent reconstruction inspired by Channel Spectrum panel 0.17.2.\n"
+DECLARE_COMPONENT_VERSION("Channel Spectrum Mirror", "1.0",
+    "Columns UI stereo spectrum for x86, x64 and ARM64EC. Independent reconstruction inspired by Channel Spectrum panel 0.17.2.\n"
     "Mirrored channels, original amplitude curves and fixed-point falling peaks. Experimental first version.");
-#ifdef _WIN64
+#if defined(_M_ARM64EC)
+VALIDATE_COMPONENT_FILENAME("foo_uie_channel_spectrum_arm64ec.dll");
+#elif defined(_WIN64)
 VALIDATE_COMPONENT_FILENAME("foo_uie_channel_spectrum_x64.dll");
 #else
 VALIDATE_COMPONENT_FILENAME("foo_uie_channel_spectrum_x86.dll");
@@ -24,7 +28,7 @@ constexpr wchar_t window_class[]=L"ChannelSpectrumMirror.1";
 
 class Panel : public uie::window, private play_callback_impl_base {
 public:
-    Panel():play_callback_impl_base(flag_on_playback_starting|flag_on_playback_new_track|flag_on_playback_stop|flag_on_playback_seek){}
+    Panel():play_callback_impl_base(flag_on_playback_starting|flag_on_playback_new_track|flag_on_playback_stop|flag_on_playback_seek|flag_on_playback_pause){}
     const GUID& get_extension_guid() const override {return panel_guid;}
     void get_name(pfc::string_base& out) const override {out="Channel Spectrum Mirror";}
     void get_category(pfc::string_base& out) const override {out="Visualisations";}
@@ -34,7 +38,7 @@ public:
     bool have_config_popup() const override {return true;}
     bool show_config_popup(HWND parent) override {
         DialogState dialog{settings_,[this](const csp::Settings& next){
-            settings_=next;engine_.reset();frame_dirty_=true;stream_.release();last_time_=-1;reported_=false;
+            d2d_.reset();settings_=next;engine_.reset();frame_dirty_=true;stream_.release();last_time_=-1;reported_=false;
             if(window_){
                 LONG_PTR ex=GetWindowLongPtr(window_,GWL_EXSTYLE)&~(WS_EX_CLIENTEDGE|WS_EX_STATICEDGE);
                 if(next.edge==1)ex|=WS_EX_CLIENTEDGE;else if(next.edge==2)ex|=WS_EX_STATICEDGE;
@@ -42,6 +46,10 @@ public:
                 background_cache_.clear();start_timer();InvalidateRect(window_,nullptr,FALSE);
             }
         }};
+        dialog.monitor_events=monitor_events_;
+        if(!window_){dialog.monitor_events=std::make_shared<csp::MonitorEvents>();dialog.monitor_fallback=!dialog.monitor_events->bind(parent);}
+        INITCOMMONCONTROLSEX controls{sizeof(controls),ICC_TAB_CLASSES|ICC_LISTVIEW_CLASSES|ICC_BAR_CLASSES|ICC_UPDOWN_CLASS};
+        InitCommonControlsEx(&controls);
         DialogBoxParam(core_api::get_my_instance(),MAKEINTRESOURCE(IDD_SETTINGS),parent,settings_proc,reinterpret_cast<LPARAM>(&dialog));
         return dialog.changed;
     }
@@ -56,7 +64,7 @@ public:
     HWND create_or_transfer_window(HWND parent,const uie::window_host_ptr& host,
         const ui_helpers::window_position_t& pos) override {
         if(window_) {
-            ShowWindow(window_,SW_HIDE);SetParent(window_,parent);
+            ShowWindow(window_,SW_HIDE);SetParent(window_,parent);monitor_events_->location_changed();
             if(host_.is_valid())host_->relinquish_ownership(window_);
             host_=host;SetWindowPos(window_,nullptr,pos.x,pos.y,pos.cx,pos.cy,SWP_NOZORDER|SWP_NOACTIVATE);
         } else {
@@ -76,16 +84,35 @@ private:
         snapshot_.invalidate();frame_dirty_=false;last_time_=-1;engine_.reset();
         if(window_)InvalidateRect(window_,nullptr,FALSE);
     }
-    void on_playback_starting(play_control::t_track_command,bool) noexcept override {invalidate_snapshot();}
-    void on_playback_new_track(metadb_handle_ptr) noexcept override {invalidate_snapshot();}
-    void on_playback_stop(play_control::t_stop_reason) noexcept override {invalidate_snapshot();}
+    void on_playback_starting(play_control::t_track_command,bool) noexcept override {invalidate_snapshot();queue_playback_refresh();}
+    void on_playback_new_track(metadb_handle_ptr) noexcept override {invalidate_snapshot();queue_playback_refresh();}
+    void on_playback_stop(play_control::t_stop_reason) noexcept override {stop_refresh();animation_clock_valid_=false;invalidate_snapshot();}
     void on_playback_seek(double) noexcept override {invalidate_snapshot();}
+    static constexpr UINT playback_refresh_message=WM_APP+103;
+    void queue_playback_refresh() noexcept {if(window_)PostMessage(window_,playback_refresh_message,0,0);}
+    void stop_refresh() noexcept {refresh_running_=false;if(window_)KillTimer(window_,1);sync_.stop();frame_timer_.stop();}
+    void on_playback_pause(bool paused) noexcept override {
+        if(paused){stop_refresh();animation_clock_valid_=false;}
+        queue_playback_refresh();
+    }
     void start_timer(){
-        KillTimer(window_,1);sync_.stop();
-        if(settings_.scanline_sync && sync_.start(window_))return;
+        stop_refresh();
+        KillTimer(window_,3);
+        const bool listening=monitor_events_->bind(window_);
+        monitor_events_->refresh(false);
+        const bool tracked=csp::start_monitor_tracking(listening,
+            [&]{return SetTimer(window_,3,5000,nullptr)!=0;},
+            [&]{console::print("Channel Spectrum Mirror: display monitoring unavailable; using manual FPS.");});
+        monitor_events_->set_polling_active(!listening && tracked);
+        active_fps_=csp::effective_refresh(settings_.follow_monitor && tracked,settings_.target_fps(),monitor_events_->current());
+        auto playback=playback_control::get();
+        if(!csp::refresh_active(IsWindowVisible(window_)!=FALSE,playback->is_playing(),playback->is_paused())){animation_clock_valid_=false;return;}
+        if(settings_.scanline_sync && sync_.start(window_)){refresh_running_=true;return;}
+        if(frame_timer_.start(window_,active_fps_)){refresh_running_=true;return;}
         csp::start_fallback_timer(
-            [&]{return SetTimer(window_,1,settings_.interval,nullptr)!=0;},
+            [&]{return SetTimer(window_,1,UINT(std::ceil(1000.0/active_fps_)),nullptr)!=0;},
             [&]{if(settings_.scanline_sync)console::print("Channel Spectrum Mirror: scanline sync unavailable; using regular timer.");});
+        refresh_running_=true;
     }
     void clear_bitmap() {
         if(dc_) {SelectObject(dc_,old_bitmap_);DeleteObject(bitmap_);DeleteDC(dc_);}
@@ -94,9 +121,11 @@ private:
     }
     void paint() {
         csp::PaintSession paintSession(window_);const HDC target=paintSession.dc;
+        if(snapshot_.valid && frame_dirty_)update_cached_frame(false);
         RECT rc;GetClientRect(window_,&rc);
         const int w=rc.right,h=rc.bottom;
         if(w>0 && h>0) {
+            d2d_.draw_or_fallback(window_,w,h,engine_.bars(),engine_.ticks(),settings_,[&]{
             if(w!=bitmap_w_ || h!=bitmap_h_) {
                 clear_bitmap();
                 BITMAPINFO bi{};bi.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);bi.bmiHeader.biWidth=w;
@@ -125,18 +154,20 @@ private:
                 if(settings_.rotation)csp::rotate_pixels(drawing,lw,lh,pixels_,settings_.rotation);
                 BitBlt(target,0,0,w,h,dc_,0,0,SRCCOPY);
             } else FillRect(target,&rc,static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
+            });
         }
     }
     void tick() {
-        if(!IsWindowVisible(window_)) {stream_.release();last_time_=-1;return;}
+        if(!IsWindowVisible(window_)) {stop_refresh();animation_clock_valid_=false;stream_.release();last_time_=-1;return;}
         auto playback=playback_control::get();
         const bool playing=playback->is_playing();
         const bool clearStopped=stop_repaint_.update(playing);
-        if(!playing) {
+        if(!playing) {stop_refresh();animation_clock_valid_=false;
             if(clearStopped){stream_.release();engine_.reset();snapshot_.invalidate();frame_dirty_=false;last_time_=-1;InvalidateRect(window_,nullptr,FALSE);}
             return;
         }
         if(playback->is_paused()){
+            stop_refresh();animation_clock_valid_=false;
             if(snapshot_.valid && frame_dirty_)update_cached_frame(false);
             return;
         }
@@ -153,7 +184,9 @@ private:
         samples_.resize(bins*channels);
         for(size_t i=0;i<samples_.size();++i)samples_[i]=static_cast<float>(chunk_.get_data()[i]);
         frame_bins_=unsigned(bins);frame_channels_=channels;frame_mask_=chunk_.get_channel_config();frame_rate_=chunk_.get_sample_rate();
-        snapshot_.capture(settings_.new_fft);frame_time_=GetTickCount();
+        snapshot_.capture(settings_.new_fft);const uint32_t wall=csp::frame_clock_ms();
+        if(animation_clock_valid_)frame_time_+=wall-animation_wall_;
+        animation_wall_=wall;animation_clock_valid_=true;
         update_cached_frame(true);
     }
     void update_cached_frame(bool animate){
@@ -182,25 +215,62 @@ private:
         try {
             switch(msg) {
             case WM_CREATE:self->start_timer();return 0;
-            case ScanlineSync::message:if(self->settings_.scanline_sync && self->sync_.ready(self->settings_.interval))self->tick();return 0;
+            case csp::MonitorEvents::visibility_message:
+            case playback_refresh_message:self->start_timer();return 0;
+            case csp::FrameTimer::message:if(self->frame_timer_.consume(wp))self->tick();return 0;
+            case ScanlineSync::message:if(self->settings_.scanline_sync && self->sync_.ready(1000.0/self->active_fps_))self->tick();return 0;
             case WM_THEMECHANGED:case WM_SYSCOLORCHANGE:self->background_cache_.clear();InvalidateRect(w,nullptr,FALSE);break;
             case WM_ERASEBKGND:return 1;
             case WM_SIZE:self->frame_dirty_=true;InvalidateRect(w,nullptr,FALSE);return 0;
             case WM_PAINT:self->paint();return 0;
-            case WM_TIMER:if(wp==1)self->tick();return 0;
+            case csp::MonitorEvents::changed_message:
+                if(self->settings_.follow_monitor && IsWindowVisible(w)){
+                    const double next=csp::effective_refresh(self->monitor_events_->tracking_available(),self->settings_.target_fps(),self->monitor_events_->current());
+                    if(csp::refresh_changed(self->active_fps_,next))self->start_timer();
+                }
+                return 0;
+            case WM_WINDOWPOSCHANGED:self->monitor_events_->location_changed();break;
+            case WM_TIMER:
+                if(wp==1)self->tick();
+                else if(wp==3){
+                    self->monitor_events_->refresh(true);
+                    auto playback=playback_control::get();
+                    if(!self->refresh_running_ && csp::refresh_active(IsWindowVisible(w)!=FALSE,playback->is_playing(),playback->is_paused()))self->start_timer();
+                }
+                return 0;
             case WM_SHOWWINDOW:
-                if(!wp) {self->sync_.stop();KillTimer(w,1);self->stream_.release();self->last_time_=-1;}
+                if(!wp) {self->stop_refresh();self->animation_clock_valid_=false;KillTimer(w,1);KillTimer(w,3);self->stream_.release();self->last_time_=-1;}
                 else {self->frame_dirty_=true;self->start_timer();}
                 break;
             case WM_CONTEXTMENU: {
-                HMENU menu=CreatePopupMenu();AppendMenu(menu,MF_STRING,1,L"Configure...");
+                HMENU menu=CreatePopupMenu();if(!menu)return 0;
+                AppendMenu(menu,MF_STRING,1,L"Configure...");
+                struct Mode {const wchar_t* label;csp::Style style;};
+                constexpr Mode modes[]={
+                    {L"Simple",csp::Style::Simple},{L"Horizontal",csp::Style::Horizontal},
+                    {L"Vertical",csp::Style::Vertical},{L"Simple-antialiasing",csp::Style::SimpleAntialias},
+                    {L"Horizontal-antialiasing",csp::Style::HorizontalAntialias},{L"Simple-line",csp::Style::SimpleLine}
+                };
+                if(HMENU colors=CreatePopupMenu()){
+                    for(unsigned i=0;i<std::size(modes);++i)
+                        AppendMenu(colors,MF_STRING|(self->settings_.style==modes[i].style?MF_CHECKED:0),10+i,modes[i].label);
+                    // The parent owns the submenu only after a successful append.
+                    if(!AppendMenu(menu,MF_POPUP,reinterpret_cast<UINT_PTR>(colors),L"Color Mode"))DestroyMenu(colors);
+                }
                 POINT p{GET_X_LPARAM(lp),GET_Y_LPARAM(lp)};
                 if(p.x==-1 && p.y==-1){p={12,12};ClientToScreen(w,&p);}
                 const auto command=TrackPopupMenu(menu,TPM_RETURNCMD|TPM_RIGHTBUTTON,p.x,p.y,0,w,nullptr);
-                DestroyMenu(menu);if(command==1)self->show_config_popup(w);return 0;
+                DestroyMenu(menu);
+                if(command==1)self->show_config_popup(w);
+                else if(command>=10 && command<10+std::size(modes)){
+                    csp::set_drawing_style(self->settings_,modes[command-10].style,self->frame_dirty_);
+                    InvalidateRect(w,nullptr,FALSE);
+                }
+                return 0;
             }
             case WM_DESTROY:
-                self->sync_.stop();KillTimer(w,1);self->stream_.release();self->clear_bitmap();self->render_cache_.gradients.surface.clear();self->render_cache_.contour.surface.clear();self->render_cache_.gradients.valid=false;self->engine_.reset();self->snapshot_.invalidate();self->last_time_=-1;return 0;
+                self->d2d_.reset();self->monitor_events_->stop();
+                self->stop_refresh();self->animation_clock_valid_=false;KillTimer(w,1);KillTimer(w,3);self->stream_.release();self->clear_bitmap();self->render_cache_.gradients.surface.clear();self->render_cache_.contour.surface.clear();self->render_cache_.gradients.valid=false;self->engine_.reset();self->snapshot_.invalidate();self->last_time_=-1;return 0;
             case WM_NCDESTROY:
                 SetWindowLongPtr(w,GWLP_USERDATA,0);self->window_=nullptr;break;
             }
@@ -217,9 +287,16 @@ private:
     std::vector<uint32_t> rotated_,background_cache_;
     RECT background_location_{};
     ScanlineSync sync_;
+    csp::FrameTimer frame_timer_;
+    std::shared_ptr<csp::MonitorEvents> monitor_events_=std::make_shared<csp::MonitorEvents>();
+    bool refresh_running_=false;
+    double active_fps_=71;
+    uint32_t animation_wall_=0;
+    bool animation_clock_valid_=false;
     csp::Settings settings_;
     csp::Engine engine_;
     csp::RenderCache render_cache_;
+    csp::D2DRenderer d2d_;
     csp::StopRepaint stop_repaint_;
     HDC dc_=nullptr;
     HBITMAP bitmap_=nullptr;

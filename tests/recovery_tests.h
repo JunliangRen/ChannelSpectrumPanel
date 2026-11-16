@@ -1,6 +1,18 @@
 #pragma once
 #include "../src/preset_save.h"
 inline void recovery_tests(){
+    int fallbackAttempts=0,monitorWarnings=0;
+    auto monitorFallback=[&]{++fallbackAttempts;return false;};
+    auto warning=[&]{++monitorWarnings;throw std::bad_alloc();};
+    check(csp::start_monitor_tracking(true,monitorFallback,warning) && fallbackAttempts==0,"working listener does not create polling timer");
+    check(!csp::start_monitor_tracking(false,monitorFallback,warning) && fallbackAttempts==1 && monitorWarnings==1,"monitor timer failure remains nonfatal even when logging throws");
+    bool drawingStarted=false;
+    csp::start_monitor_tracking(false,[]{throw std::bad_alloc();return false;},warning);
+    csp::start_fallback_timer([&]{drawingStarted=true;return true;},[]{});
+    check(drawingStarted,"monitor setup failure cannot interrupt refresh setup");
+    check(csp::start_monitor_tracking(false,[]{return true;},warning),"monitor fallback timer can restore tracking");
+    check(!csp::refresh_active(true,false,false) && !csp::refresh_active(true,true,true) && !csp::refresh_active(false,true,false),"idle paused and hidden states disable high-frequency refresh");
+    check(csp::refresh_active(true,true,false),"visible playback enables refresh after resume");
     bool started=false;int logs=0;
     csp::start_fallback_timer([&]{started=true;return true;},[&]{++logs;if(!started)throw 1;throw std::bad_alloc();});
     check(started && logs==1,"fallback timer starts even when logging fails");
@@ -24,6 +36,40 @@ inline void recovery_tests(){
     engine.reset();s.rotation=1;
     engine.update(samples,1024,2,0,1,100,200,14,s,48000,0,false);
     check(!engine.bars().empty(),"paused settings change rebuilds from retained spectrum");
+
+    // Use the same style-change operation as the context menu. No playback
+    // tick runs between selection and rebuilding the cached paused snapshot.
+    csp::Settings styleSettings;styleSettings.style=csp::Style::Simple;
+    styleSettings.width=5;styleSettings.spacing=3;
+    csp::Engine pausedEngine;csp::SnapshotState snapshot;snapshot.capture(styleSettings.new_fft);
+    bool dirty=false;
+    pausedEngine.update(samples,1024,2,0,1,200,100,14,styleSettings);
+    const auto wideBars=pausedEngine.bars();
+    for(auto style:{csp::Style::SimpleLine,csp::Style::Horizontal,csp::Style::SimpleLine,csp::Style::Simple}){
+        csp::set_drawing_style(styleSettings,style,dirty);
+        check(dirty && snapshot.valid,"context style change requests rebuild without discarding paused snapshot");
+        if(snapshot.valid && dirty){
+            pausedEngine.update(samples,1024,2,0,1,200,100,14,styleSettings,48000,0,false);dirty=false;
+        }
+        csp::Engine reference;reference.update(samples,1024,2,0,1,200,100,14,styleSettings,48000,0,false);
+        const auto& actual=pausedEngine.bars();const auto& expected=reference.bars();
+        bool matches=actual.size()==expected.size();
+        for(size_t i=0;matches && i<actual.size();++i)
+            matches=actual[i].left==expected[i].left && actual[i].right==expected[i].right && actual[i].top==expected[i].top && actual[i].peak==expected[i].peak;
+        check(matches && !actual.empty(),"paused menu style rebuild matches fresh target-style geometry and peaks");
+        if(style==csp::Style::SimpleLine){
+            bool changed=actual.size()!=wideBars.size();
+            for(size_t i=0;!changed && i<actual.size();++i)changed=actual[i].left!=wideBars[i].left || actual[i].right!=wideBars[i].right;
+            check(changed,"line style replaces old wide-bar geometry while paused");
+        }
+        const auto still=actual;
+        pausedEngine.update(samples,1024,2,0,1,200,100,5000,styleSettings,48000,0,false);
+        bool frozenPeaks=still.size()==pausedEngine.bars().size();
+        for(size_t i=0;frozenPeaks && i<still.size();++i)frozenPeaks=still[i].peak==pausedEngine.bars()[i].peak;
+        check(frozenPeaks,"paused redraw after style switch does not advance peak animation");
+        csp::set_drawing_style(styleSettings,style,dirty);check(!dirty,"reselecting current style does not rebuild frozen peaks");
+        dirty=true;csp::set_drawing_style(styleSettings,style,dirty);check(dirty,"reselecting current style preserves an existing resize invalidation");dirty=false;
+    }
 
     struct FakeOps {
         int fail,stage=0;bool replaced=false;
