@@ -22,9 +22,13 @@ void check_close(double a,double b,const char* name){check(std::abs(a-b)<1e-9,na
 #include "settings_options_tests.h"
 #include "d2d_tests.h"
 #include "localization_tests.h"
+#include "../src/installation_guard.h"
 int main(int argc,char** argv) {
  try {
     settings_options_tests();
+    check(csp::legacy_components_absent([](const wchar_t*){return false;}),"clean installation accepts the unified DLL");
+    for(const wchar_t* legacy:{L"foo_uie_channel_spectrum_x86.dll",L"foo_uie_channel_spectrum_x64.dll",L"foo_uie_channel_spectrum_arm64ec.dll"})
+        check(!csp::legacy_components_absent([&](const wchar_t* name){return wcscmp(name,legacy)==0;}),"each loaded legacy DLL rejects mixed installation");
     localization_tests();
     d2d_tests();
     monitor_events_tests();

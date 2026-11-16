@@ -39,5 +39,6 @@ try {
         }
         Write-Host 'x86/x64 synthetic previews match byte for byte.'
     }
-    foreach ($arch in $architectures) { & "$PSScriptRoot/package.ps1" -Architecture $arch }
+    & "$PSScriptRoot/package.ps1" -Architecture $Architecture
+    if ($Architecture -eq 'all') { & "$PSScriptRoot/../tests/package_tests.ps1" }
 } finally { Pop-Location }

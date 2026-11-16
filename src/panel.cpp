@@ -9,18 +9,20 @@
 #include "scanline.h"
 #include "frame_timer.h"
 #include "runtime_state.h"
+#include "installation_guard.h"
 #include <uxtheme.h>
 
-DECLARE_COMPONENT_VERSION("Channel Spectrum Mirror", "1.1",
+DECLARE_COMPONENT_VERSION("Channel Spectrum Mirror", "1.2",
     "Columns UI stereo spectrum for x86, x64 and ARM64EC. Independent reconstruction inspired by Channel Spectrum panel 0.17.2.\n"
     "Mirrored channels, original amplitude curves and fixed-point falling peaks. English, Simplified Chinese and Japanese settings.");
-#if defined(_M_ARM64EC)
-VALIDATE_COMPONENT_FILENAME("foo_uie_channel_spectrum_arm64ec.dll");
-#elif defined(_WIN64)
-VALIDATE_COMPONENT_FILENAME("foo_uie_channel_spectrum_x64.dll");
-#else
-VALIDATE_COMPONENT_FILENAME("foo_uie_channel_spectrum_x86.dll");
-#endif
+class InstallationValidator : public component_installation_validator {
+public:
+    bool is_installed_correctly() override {
+        return test_my_name("foo_uie_channel_spectrum.dll") &&
+            csp::legacy_components_absent([](const wchar_t* name){return GetModuleHandleW(name)!=nullptr;});
+    }
+};
+static service_factory_single_t<InstallationValidator> installation_validator;
 
 namespace {
 constexpr GUID panel_guid={0x0c45a893,0x4607,0x4914,{0x8e,0x64,0x21,0x89,0xb3,0xa2,0x79,0x70}};

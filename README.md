@@ -25,7 +25,7 @@ Requires Visual Studio C++ v143 tools (including MASM and ARM64/ARM64EC tools), 
 .\scripts\build.ps1
 ```
 
-The default build produces all three architecture packages in `dist/`. Use `-Architecture x86`, `-Architecture x64` or `-Architecture arm64ec` to build one target. ARM runtime tests require Windows on ARM.
+The default build produces one package containing all three architectures in `dist/`. Use `-Architecture x86`, `-Architecture x64` or `-Architecture arm64ec` to build one target. ARM runtime tests require Windows on ARM.
 
 ## Validation
 

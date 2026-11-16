@@ -1,10 +1,18 @@
-param([ValidateSet('x86','x64','arm64ec')][string]$Architecture = 'x64')
+param([ValidateSet('all','x86','x64','arm64ec')][string]$Architecture = 'all')
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
 $root = Split-Path $PSScriptRoot -Parent
-$out = Join-Path $root "dist\foo_uie_channel_spectrum_$Architecture-1.1.fb2k-component"
-$dll = Join-Path $root "dist\$Architecture\foo_uie_channel_spectrum_$Architecture.dll"
-if (!(Test-Path -LiteralPath $dll)) { throw 'Build the DLL before packaging.' }
+$suffix = if ($Architecture -eq 'all') { '' } else { "_$Architecture" }
+$out = Join-Path $root "dist\foo_uie_channel_spectrum$suffix-1.2.fb2k-component"
+$files = @{
+    'README.md' = (Join-Path $root 'README.md')
+    'THIRD-PARTY-NOTICES.txt' = (Join-Path $root 'THIRD-PARTY-NOTICES.txt')
+}
+$architectures = if ($Architecture -eq 'all') { @('x86','x64','arm64ec') } else { @($Architecture) }
+foreach ($arch in $architectures) {
+$Architecture = $arch
+$dll = Join-Path $root "dist\$arch\foo_uie_channel_spectrum.dll"
+if (!(Test-Path -LiteralPath $dll)) { throw "Missing $arch DLL; build all required architectures first." }
 # Reject stale or wrong-architecture DLLs before creating an installable package.
 $bytes = [IO.File]::ReadAllBytes($dll)
 $peOffset = [BitConverter]::ToInt32($bytes,0x3c)
@@ -26,26 +34,20 @@ if ($Architecture -eq 'arm64ec') {
     }
     if ($loadOffset -lt 0 -or $loadSize -lt 208 -or [BitConverter]::ToUInt64($bytes,$loadOffset+200) -eq 0) { throw 'Missing ARM64EC CHPE metadata; refusing to package an x64 DLL as ARM.' }
 }
-$dllEntry = if ($Architecture -eq 'x64') { 'x64/foo_uie_channel_spectrum_x64.dll' } elseif ($Architecture -eq 'arm64ec') { 'arm64ec/foo_uie_channel_spectrum_arm64ec.dll' } else { 'foo_uie_channel_spectrum_x86.dll' }
-$zip = [IO.Compression.ZipArchive]::new([IO.File]::Open($out,[IO.FileMode]::Create),[IO.Compression.ZipArchiveMode]::Create)
+$entry = if ($arch -eq 'x86') { 'foo_uie_channel_spectrum.dll' } else { "$arch/foo_uie_channel_spectrum.dll" }
+$files[$entry] = $dll
+}
+# Validate all inputs before replacing a previous package.
+foreach ($source in $files.Values) { if (!(Test-Path -LiteralPath $source -PathType Leaf)) { throw "Missing input: $source" } }
+$zip = [IO.Compression.ZipArchive]::new([IO.File]::Open("$out.tmp",[IO.FileMode]::Create),[IO.Compression.ZipArchiveMode]::Create)
 try {
-    $files = @{
-        $dllEntry = $dll
-        'analysis/STABILITY-0.5.1.md' = (Join-Path $root 'analysis/STABILITY-0.5.1.md')
-        'analysis/DUAL-ARCHITECTURE.md' = (Join-Path $root 'analysis/DUAL-ARCHITECTURE.md')
-        'analysis/RESTORATION-0.4.md' = (Join-Path $root 'analysis/RESTORATION-0.4.md')
-        'analysis/DIRECTION-0.4.1.md' = (Join-Path $root 'analysis/DIRECTION-0.4.1.md')
-        'analysis/PARITY.md' = (Join-Path $root 'analysis/PARITY.md')
-        'analysis/evidence/csp-field-order.tsv' = (Join-Path $root 'analysis/evidence/csp-field-order.tsv')
-        'README.md' = (Join-Path $root 'README.md')
-        'THIRD-PARTY-NOTICES.txt' = (Join-Path $root 'THIRD-PARTY-NOTICES.txt')
-    }
-    foreach ($name in $files.Keys) {
+    foreach ($name in ($files.Keys | Sort-Object)) {
         $entry = $zip.CreateEntry($name,[IO.Compression.CompressionLevel]::Optimal)
         $stream = $entry.Open()
         try { $bytes=[IO.File]::ReadAllBytes($files[$name]); $stream.Write($bytes,0,$bytes.Length) } finally { $stream.Dispose() }
     }
 } finally { $zip.Dispose() }
+Move-Item -LiteralPath "$out.tmp" -Destination $out -Force
 $hash = (Get-FileHash -LiteralPath $out -Algorithm SHA256).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText("$out.sha256", "$hash  $([IO.Path]::GetFileName($out))`r`n",[Text.UTF8Encoding]::new($false))
 Write-Host "Package: $out"
