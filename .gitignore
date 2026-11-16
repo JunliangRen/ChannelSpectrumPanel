@@ -43,8 +43,3 @@ venv/
 .vscode/
 .DS_Store
 Thumbs.db
-
-# Local-only migration utilities
-/analysis/UPGRADE-1.1.md
-/scripts/upgrade-from-1.1.ps1
-/tests/package_migration_tests.ps1
