@@ -3,6 +3,7 @@
 #include "../src/config.h"
 #include "../src/original_config.h"
 #include <fstream>
+#include <float.h>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -11,6 +12,26 @@ void check(bool ok,const char* name) {++checks;if(!ok)throw std::runtime_error(n
 void check_close(double a,double b,const char* name){check(std::abs(a-b)<1e-9,name);}
 int main(int argc,char** argv) {
  try {
+    // The assembly helper must preserve the caller's rounding mode and stack
+    // across repeated calls, and return the same pixels in either ABI.
+    unsigned int savedControl=0;
+    _controlfp_s(&savedControl,0,0);
+    csp::MappingInput mappingInput{173,5,1024,890,1};
+    csp::MappingOutput mappingReference{};
+    csp::csp_mapping_coordinates(&mappingInput,&mappingReference);
+    for (unsigned int rounding : {_RC_NEAR,_RC_DOWN,_RC_UP,_RC_CHOP}) {
+        unsigned int before=0,after=0;
+        _controlfp_s(&before,rounding,_MCW_RC);
+        for(int repeat=0;repeat<64;++repeat) {
+            csp::MappingOutput output{};
+            csp::csp_mapping_coordinates(&mappingInput,&output);
+            check(output.previous==mappingReference.previous && output.current==mappingReference.current && output.wide==mappingReference.wide,"mapping independent of caller rounding mode");
+        }
+        _controlfp_s(&after,0,0);
+        check(before==after,"mapping restores floating-point control state");
+    }
+    unsigned int restoredControl=0;
+    _controlfp_s(&restoredControl,savedControl,_MCW_RC);
     csp::Settings s;
     const double k=.2309*std::log2(1025.0);
     check_close(csp::amplitude(k,1024,s),1,"old FFT unity reference");
@@ -164,7 +185,7 @@ int main(int argc,char** argv) {
     check(bool(fixture),"original coordinate fixture present");
     int fw,fh,fb,fc,fp,fs,fl,fd,fr,frc,fg,ff,fa,scale;
     unsigned differences=0,compared=0,cases=0;
-    std::ofstream diff("build/oracle-differences.txt");
+    std::ofstream diff(argc>3?argv[3]:"build/oracle-differences.txt");
     while(fixture>>fw>>fh>>fb>>fc>>fp>>fs>>fl>>fd>>fr>>frc>>fg>>ff>>fa>>scale){
         const int extent=(fw-(fc-1)*fg)/fc/fp*fp,shift=(fw-(fc-1)*fg-fc*extent)/2;
         for(int c=0;c<fc;++c){

@@ -8,14 +8,18 @@
 #include "scanline.h"
 #include <uxtheme.h>
 
-DECLARE_COMPONENT_VERSION("Channel Spectrum Mirror", "0.4.1",
-    "64-bit Columns UI stereo spectrum. Independent reconstruction inspired by Channel Spectrum panel 0.17.2.\n"
+DECLARE_COMPONENT_VERSION("Channel Spectrum Mirror", "0.5.0",
+    "Columns UI stereo spectrum for x86 and x64. Independent reconstruction inspired by Channel Spectrum panel 0.17.2.\n"
     "Mirrored channels, original amplitude curves and fixed-point falling peaks. Experimental first version.");
+#ifdef _WIN64
 VALIDATE_COMPONENT_FILENAME("foo_uie_channel_spectrum_x64.dll");
+#else
+VALIDATE_COMPONENT_FILENAME("foo_uie_channel_spectrum_x86.dll");
+#endif
 
 namespace {
 constexpr GUID panel_guid={0x0c45a893,0x4607,0x4914,{0x8e,0x64,0x21,0x89,0xb3,0xa2,0x79,0x70}};
-constexpr wchar_t window_class[]=L"ChannelSpectrumMirror.x64.1";
+constexpr wchar_t window_class[]=L"ChannelSpectrumMirror.1";
 
 class Panel : public uie::window {
 public:

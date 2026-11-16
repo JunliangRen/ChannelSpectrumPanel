@@ -1,6 +1,6 @@
-# Channel Spectrum Mirror (x64)
+# Channel Spectrum Mirror (x86 / x64)
 
-Experimental version: **0.4.1**. An independent reconstruction of a spectrum visualization panel for **64-bit foobar2000 2.x with Columns UI**. Full behavioral and pixel-level parity has not yet been established.
+Experimental version: **0.5.0**. An independent reconstruction of a spectrum visualization panel for **32-bit or 64-bit foobar2000 2.x with matching Columns UI**. Full behavioral and pixel-level parity has not yet been established.
 
 ## Original component and credit
 
@@ -10,13 +10,15 @@ The original **Channel Spectrum panel**, `foo_uie_vis_channel_spectrum`, was dev
 - [Original component discussion thread](https://hydrogenaud.io/index.php/topic,59249.0.html), linked from the component's Hydrogenaudio entry.
 - [Hydrogenaudio component entry](https://wiki.hydrogenaud.io/index.php?title=Foobar2000%3AComponents%2FChannel_Spectrum_panel_%28foo_uie_vis_channel_spectrum%29): identifies ssenna, the x86 architecture, and the original component.
 
-Credit for the original component belongs to ssenna. This repository is **not an official update, an author-endorsed release, or recovered original source code**. It contains a separately written x64 implementation based on analysis of version 0.17.2. The original DLL is not distributed here. The version numbers of this reconstruction are independent of the original component's releases.
+Credit for the original component belongs to ssenna. This repository is **not an official update, an author-endorsed release, or recovered original source code**. It contains a separately written implementation based on analysis of version 0.17.2. The original DLL is not distributed here. The version numbers of this reconstruction are independent of the original component's releases.
 
 ## Installation
 
-Build the component using the instructions below. In foobar2000, select `dist/foo_uie_channel_spectrum_x64-0.4.1.fb2k-component` through **Preferences > Components > Install**, apply, and restart. Add **Visualisations > Channel Spectrum Mirror** to the Columns UI layout. Right-click the panel and select **Configure**.
+Build the component using the instructions below. In foobar2000, select the matching `dist/foo_uie_channel_spectrum_x86-0.5.0.fb2k-component` or `dist/foo_uie_channel_spectrum_x64-0.5.0.fb2k-component` through **Preferences > Components > Install**, apply, and restart. Add **Visualisations > Channel Spectrum Mirror** to the Columns UI layout. Right-click the panel and select **Configure**.
 
-Configurations from versions 0.1/0.2 of this reconstruction remain readable. Defaults retain mirrored left/right channels, bass at the center, gray-white gradient bars on black, and bright peak markers. The current configuration format is version 3; older component versions cannot read it. Only x64 Columns UI is supported. The corresponding x64 MSVC runtime is required.
+Configurations from versions 0.1/0.2 of this reconstruction remain readable. Defaults retain mirrored left/right channels, bass at the center, gray-white gradient bars on black, and bright peak markers. The current configuration format is version 3; older component versions cannot read it. The player, Columns UI, component, and MSVC runtime must use matching architectures. Both builds use the same configuration format and panel GUID. Supporting x86 does not establish compatibility with foobar2000 1.x or older Windows versions.
+
+Version 0.5.0 adds dual-architecture builds; see the [architecture and validation notes](analysis/DUAL-ARCHITECTURE.md).
 
 Version 0.4.1 fixes forced Left/Right combined with Reverse frequency. See the [direction regression record](analysis/DIRECTION-0.4.1.md).
 
@@ -36,7 +38,7 @@ The original disables peaks in Simple-line mode; this implementation intentional
 
 ## Validation and limitations
 
-The Release x64 build and 8,844 offline assertions passed. The count includes per-bar boundary checks, not 8,844 independent scenarios. Coverage includes configuration migration, field round trips, original preset fields and color byte order, legacy prefixes, channels, rotation, styles, peaks, padding, and buffer boundaries.
+Both Release builds pass 9,104 offline assertions per test invocation. Each architecture runs three preview styles; corresponding previews match byte for byte. The count includes per-bar boundary checks, not 9,104 independent scenarios. New checks exercise mapping under all four caller rounding modes and verify restoration of floating-point control state. Coverage includes configuration migration, field round trips, original preset fields and color byte order, legacy prefixes, channels, rotation, styles, peaks, padding, and buffer boundaries.
 
 Under a controlled x87/SSE emulation profile, 17,637 valid four-DWORD frequency descriptors matched across 13 fixtures. Eight amplitude ticks, speaker mapping, native GDI gradients and polylines, and short preset prefixes have also been implemented.
 
@@ -53,7 +55,7 @@ Requirements: Windows, Visual Studio C++ v143 tools including MASM, Windows SDK,
 .\scripts\build.ps1
 ```
 
-Use `-MSBuild` to specify an MSBuild.exe path. Dependency versions and hashes are pinned in the setup script. Packages are written to `dist/`; tests and synthetic previews are written to `build/`. Debug PDB files are excluded from the package. Project-authored text uses UTF-8 and CRLF; downloaded SDK files retain their upstream formatting.
+The default build compiles and tests both architectures, then creates two separate packages. Use `-Architecture x86` or `-Architecture x64` for a single target, and `-MSBuild` to specify an MSBuild.exe path. The Visual Studio installation must include x86 and x64 C++ tools. The x64-named project file is retained for existing tooling; it supports both targets. Dependency versions and hashes are pinned in the setup script. Packages are written to `dist/`; DLLs are written to `dist/x86/` and `dist/x64/`; tests, logs, and synthetic previews are separated under `build/x86/` and `build/x64/`. Debug PDB files are excluded from the package. Project-authored text uses UTF-8 and CRLF; downloaded SDK files retain their upstream formatting.
 
 [Static analysis](analysis/STATIC-ANALYSIS.md) | [Initial implementation](analysis/IMPLEMENTATION.md) | [Simple-line analysis](analysis/SIMPLE-LINE.md) | [Third-party notices](THIRD-PARTY-NOTICES.txt)
 
@@ -70,3 +72,13 @@ python scripts/original_oracle.py
 ```
 
 The emulator executes only the controlled coordinate routine and does not initialize the original DLL. Generated raw JSON is ignored; compact coordinate fixtures are retained for regression comparisons.
+
+## Preparing host playback tests
+
+Generate deterministic 48 kHz / 24-bit test WAVs without starting foobar2000:
+
+```powershell
+python scripts/generate-test-audio.py
+```
+
+The files, playlist, segment timeline, checksums, and measured PCM manifest are written to the ignored `build/host-test-audio/` directory. The generator uses only the Python standard library and verifies encoded channel isolation, tone frequencies, levels, sweep progression, and digital silence. Follow the [host test plan](analysis/HOST-TEST-PLAN.md) when ready. Audio-file verification does not establish plugin playback correctness.
