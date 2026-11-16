@@ -1,66 +1,64 @@
-# 原版 0.17.2 与 x64 0.4.0 差异清单
+# Original 0.17.2 versus x64 0.4.0 parity checklist
 
-日期：2026-11-16。用户要求全面移植；本清单记录实际进度，**目标尚未全部完成**。现阶段提供功能扩展版本，不把同名设置或合成测试视为原版一致性证明。
+Date: 2026-11-16. The goal is comprehensive reconstruction, but **it is not complete**. Matching option names and successful synthetic tests do not establish original behavior. For the original component, author credit, and release links, see the [README](../README.md#original-component-and-credit).
 
-## 已增加的功能及证据强度
+## Implemented features and evidence limits
 
-| 原版功能 | 0.4.0 状态 | 差异/验证边界 |
+| Original feature | Status in 0.4.0 | Differences / verification limits |
 | --- | --- | --- |
-| Simple / Horizontal / Vertical | 已实现对应实色、幅度着色、全高渐变 | 已改用原生 GDI GradientFill；全部组合仍需原版像素对照 |
-| 两种 antialiasing | 已实现柱顶渐变过渡 | 原生 GDI 柱顶渐变；0 blur 无过渡，已移除旧 approx. 标签；未验证全部组合 |
-| Blur level | 已修正为高度百分比 0–100 | 0x10003E3C–0x10003E79：trunc(abs(height)×level/100)；零值做边界保护 |
-| Simple-line | 每声道独立的 1 px 折线 | 已使用 GDI Polyline 和跨分区补接；边界点组装仍需原版像素对照；峰值为用户扩展 |
-| Mirror / Right / Left | 已实现 | 纠正为强制方向覆盖 Reverse；Mirror 单显示声道额外翻转 |
-| Reverse channel-pos | 已实现 | 移动物理分区但保留逻辑方向，不等同仅交换音频 |
-| Rotate | 四向旋转已实现 | 通用像素旋转，未逐指令复制原版四个独立绘制函数 |
-| Separate / Merge all / Specified | 已实现 | Merge 取最大值；指定扬声器位按实际 mask 映射到紧凑输入索引 |
-| 排序、活动声道 | 已实现 18 项顺序和掩码 | All input channels 打开时生效；保留前版强制前 L/R 的默认行为 |
-| 整图 padding、声道 padding | 已实现 | 按节距量化声道区域并分配居中余量，退化尺寸安全清空 |
-| 柱宽、间距、Bar mode | 已实现 | 分段模式 y 偶数对齐、隔行留空、pitch 增加 1 |
-| 五个基础颜色 | 已实现 | UI 使用 RRGGBB；原版 COLORREF 导入/导出交换红蓝字节 |
-| 八色前景/背景 | 已实现 | 原生 GDI 七段渐变；前景八色只作用于 Vertical；全组合未运行时对照 |
-| 频率刻度 | 已实现 2 kHz 阈值，每五个长刻度 | 0x100211A0：max(0,trunc(2000×n×M/(Fs/2))-1)；已使用原版描述符中心；bin 0 及构造中间状态尚需逐项核对 |
-| 幅度刻度 | 已恢复八个 10 dB 刻度及交替长短 | 旧/新 FFT 与 log 分支已恢复；原例程夹具 y 容差 1 px |
-| 刻度长度 100 | 已实现全长线语义 | 来自坐标构造的 cmp length,0x64 分支 |
-| Show Peaks / fall / hold | 已实现 | 沿用定点更新；原版 Simple-line 禁用峰值，本版允许 |
-| FFT / 幅度归一化 | 已实现 | 宿主旧/新流模式实际输入归一化仍需音频对照 |
-| Edge style | None / Sunken / Static | 使用原生窗口扩展样式，宿主布局实测未完成 |
-| Transparent background | 已有父窗口背景实现 | DrawThemeParentBackground；不是原版区域恢复/透明合成代码的直接复制 |
-| Fast pseudo-transparent | 已有缓存实现 | 尺寸、位置、主题、设置变化失效；动态父背景必须关闭缓存以实时刷新 |
-| Sync with scanline | 实验实现 | DDraw7 GetScanLine + 2 ms 多媒体定时器投递 UI；顶部预留 100 px，超时/次显示器回退；调度与原版不同 |
-| Apply / Reset / Cancel | 已实现 | Apply 立即应用，Cancel 保留已 Apply 内容但丢弃之后未应用修改；UI 实测未完成 |
-| 新预设 import/export | `.csm` 已实现 | CSMX 文件头 + 版本化小端字段 |
-| 原版预设 import/export | 完整 300 字节及 DWORD 边界旧前缀转换 | 尚无真实原版导出夹具对照；历史短前缀保留缺失尾项，新增样式拒绝原格式导出 |
+| Simple / Horizontal / Vertical | Solid, amplitude-colored, and full-height gradient rendering | Native GDI GradientFill; all combinations still need original pixel comparisons |
+| Both antialiasing styles | Bar-top gradient transitions | Native GDI; zero blur means no transition; old approx. labels removed, but not all combinations verified |
+| Blur level | Height percentage, 0-100 | 0x10003E3C-0x10003E79: trunc(abs(height)*level/100); zero is handled safely |
+| Simple-line | One-pixel channel contours | GDI Polyline and cross-partition connections; boundary point assembly still needs comparison; peaks are an extension |
+| Mirror / Right / Left | Implemented | 0.4.0 forces direction over Reverse and flips single-channel Mirror. Caller preprocessing at 0x100035FC-0x1000361C swaps forced directions when reversed: this remains a known discrepancy; builder-only fixtures do not cover it |
+| Reverse channel-pos | Implemented | Moves physical partitions while preserving logical direction; not merely an audio swap |
+| Rotate | Four orientations | Generic pixel rotation rather than the original four independent drawing paths |
+| Separate / Merge all / Specified | Implemented | Merge takes maxima; speaker bits map through the actual channel mask to compact input indices |
+| Ordering and active channels | 18-entry order and mask | Used with All input channels; the earlier forced front-L/R default remains |
+| Overall and channel padding | Implemented | Pitch-quantized partitions with centered remainder; degenerate sizes clear safely |
+| Bar width, spacing, Bar mode | Implemented | Segmented bars align y to even pixels, skip alternate rows, and add 1 to pitch |
+| Five base colors | Implemented | UI uses RRGGBB; original COLORREF conversion swaps red/blue bytes |
+| Eight-color foreground/background | Implemented | Native GDI seven-segment gradients; foreground palette applies only to Vertical; full combinations lack runtime comparison |
+| Frequency ticks | Every 2 kHz; every fifth tick is long | 0x100211A0: max(0,trunc(2000*n*M/(Fs/2))-1); descriptor centers used; bin 0 and intermediate construction state need checking |
+| Amplitude ticks | Eight 10 dB levels with alternating lengths | Old/new FFT and log branches restored; original-routine fixture y tolerance is 1 px |
+| Tick length 100 | Full-length line | From the coordinate builder's cmp length,0x64 branch |
+| Show Peaks / fall / hold | Implemented | Fixed-point updates retained; original Simple-line disables peaks, this version permits them |
+| FFT / amplitude normalization | Implemented | Actual host input normalization in old/new stream modes needs audio comparison |
+| Edge style | None / Sunken / Static | Native extended window styles; host layout testing incomplete |
+| Transparent background | Parent-background implementation | DrawThemeParentBackground, not a direct reproduction of original region restoration/compositing |
+| Fast pseudo-transparent | Background cache | Invalidated on size, position, theme, or settings changes; disable caching for continuously changing parent backgrounds |
+| Sync with scanline | Experimental | DDraw7 GetScanLine plus a 2 ms multimedia timer posting to the UI; 100 px top margin, timeout/secondary-monitor fallback; scheduling differs |
+| Apply / Reset / Cancel | Implemented | Apply is immediate; Cancel retains applied changes and discards later edits; UI testing incomplete |
+| New preset import/export | `.csm` implemented | CSMX header and versioned little-endian fields |
+| Original preset import/export | Full 300-byte format and DWORD-aligned prefixes | No real original-export fixture; missing tail fields are retained; additional styles cannot export to this format |
 
-## 原 `.csp` 结构依据
+## Original `.csp` structure
 
-- 0x1001E71A 检查 magic=0x07172737；0x1001E876 写同一 magic。
-- 0x1001C3D0–0x1001C856 依次写 74 个 DWORD，总长度 4+74×4=300 字节。完整位置表见 evidence/csp-field-order.tsv。
-- 特殊项：透明标志合并 cfg+0x50 | (cfg+0x54)<<1；FFT 写实际 2^(index+9)；18 个排序项；末尾 FFT mode。
-- cfg 偏移并非文件偏移，转换器使用显式 offset 表，未直接 memcpy 旧 C++ 对象。
-- Hold 在文件里是运行配置的毫秒值；旧 UI 编辑单位为 10 ms，不能导入时再乘一次 10。
-- 颜色按 COLORREF 与 RGB 转换；合成往返测试只证明新转换器两方向与字段表一致，不证明原版读取接受或全部语义正确。
+- 0x1001E71A checks magic 0x07172737; 0x1001E876 writes the same magic.
+- 0x1001C3D0-0x1001C856 writes 74 DWORDs in sequence, totaling 4+74*4=300 bytes. See `evidence/csp-field-order.tsv`.
+- Special fields include merged transparency flags cfg+0x50 | (cfg+0x54)<<1, the actual FFT size 2^(index+9), 18 order entries, and the final FFT mode.
+- Configuration-object offsets are not file offsets. Conversion uses an explicit table rather than memcpy of the old C++ object.
+- Hold is stored in milliseconds. The old UI uses 10 ms units; import must not multiply the stored value by 10 again.
+- COLORREF/RGB conversion is explicit. Synthetic round trips establish agreement with the field table, not acceptance by the original reader or correctness of every field's semantics.
 
-## 新版配置
+## Reconstruction configuration
 
-版本 3，共 77 个 uint32（308 字节），保留原前 12 字段，追加布局、颜色、调色板、扫描线和活动掩码。版本 1/2 继续读取。解码先验证大小和版本，在临时 Settings 上解码，再替换当前设置；截断/未知版本不部分应用。
+Version 3 contains 77 uint32 values (308 bytes). It preserves the first 12 fields and adds layout, color, palette, scanline, and active-mask fields. Versions 1/2 remain readable. Decoding validates size/version and decodes into temporary Settings before replacing current values; truncated or unknown versions are not partially applied.
 
-## 验证
+## Validation
 
-- Release x64 构建通过，当前 7696 项断言通过。
-- 新增覆盖：配置 1/2 迁移与 3 完整往返、每个截断位置、原 `.csp` magic/长度/字段/颜色和未知样式、3 通道 max/选择/排序、掩码为空、padding、8 样式×3 方向×反转×多种尺寸、旋转逆变换、背景保持、峰值关闭、模糊百分比、频率刻度数。
-- 尚未执行 DirectDraw、父背景缓存、设置对话框的自动化交互测试；编译不是这些功能成功工作的证据。
-- 本轮通过 Computer Use 成功启动 build/portable-test/foobar2000.exe，出现 New user interface module(s) found。选择 Columns UI 时激活失败，按技能规定刷新窗口并重试仍失败；没有完成面板实例化或音乐播放。
-- 便携测试窗口若仍存在，可由用户关闭；没有强杀进程或操作用户原有播放器配置。
+- Release x64 build and 7,696 assertions passed.
+- Coverage includes version 1/2 migration, complete version 3 round trips, every truncation point, original `.csp` magic/length/fields/colors/unknown styles, three-channel max/selection/order, empty masks, padding, eight styles across three directions/reversals/sizes, inverse rotation, preserved backgrounds, disabled peaks, blur percentage, and tick counts.
+- DirectDraw, parent-background caching, and dialog interaction lack automated host tests. Compilation does not establish runtime behavior.
+- `build/portable-test/foobar2000.exe` reached the New user interface module(s) found dialog. Window activation failed when selecting Columns UI, and recovery failed again. Panel instantiation and playback were not completed.
+- No player process was forcibly terminated and the existing user's player configuration was not changed. Any remaining portable test window may be closed manually.
 
-## 仍需完成，不能省略
+## Remaining work
 
-1. 已重建四 DWORD 描述符；13 组夹具的 17,637 条有效记录零差异。未覆盖浮点 profile、bin 0 和其他参数仍需验证。
-2. GDI 颜色缓存、所有渐变/背景组合、四旋转路径及 Simple-line 连接规则的对照。
-3. 幅度刻度和扬声器映射已恢复，仍需真实宿主音频与布局验证。
-4. 旧前缀已支持；仍缺原版真实 `.csp` 导出/再导入验证。
-5. 宿主加载、设置保存重启、多个面板、暂停/seek/停止、长时间运行、不同 DPI 与显卡上的透明/扫描线测试。
+1. Four-DWORD descriptors are reconstructed; 17,637 valid rows across 13 fixtures match. Untested floating-point profiles, bin 0, other parameters, and caller preprocessing still need comparison.
+2. Compare GDI caches, all gradient/background combinations, four rotation paths, and Simple-line connections.
+3. Verify amplitude ticks and speaker mapping with real host audio and layouts.
+4. Validate real original `.csp` export/reimport, including legacy prefixes.
+5. Test loading, save/restart persistence, multiple panels, pause/seek/stop, long runs, DPI, and transparency/scanline behavior across graphics devices and monitors.
 
-以上仍是工作项，不是请求用户重新授权；本轮成果没有宣称“全部原样移植”。
-
-本轮具体证据与受控仿真条件见 [0.4.0 还原记录](RESTORATION-0.4.md)。
+These remain outstanding; the release does not claim complete original parity. See the [0.4.0 reconstruction record](RESTORATION-0.4.md) for emulation conditions and evidence.

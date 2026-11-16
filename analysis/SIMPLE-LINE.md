@@ -1,35 +1,35 @@
-# Simple-line 分析与 0.2.0 移植
+# Simple-line analysis and version 0.2.0 implementation
 
-本文保留 0.2.0 历史状态；当前 GDI、频率描述符和分区补接实现见 [0.4.0 还原记录](RESTORATION-0.4.md)。
+This is a historical 0.2.0 record. For the current GDI renderer, frequency descriptors, and partition connections, see the [0.4.0 reconstruction record](RESTORATION-0.4.md).
 
-## 更正与结论
+## Findings
 
-原版 Simple-line 是相邻频谱点组成的轮廓折线，不是分开的细竖柱。前一答复仅凭名称猜测不够准确。本轮未执行原 DLL，交叉核对了选项顺序、跳转表、POINT 数组写入和 GDI 调用。证据摘录：evidence/simple-line.txt（含原反汇编行号）。
+The original Simple-line style is a contour joining adjacent spectrum points, not a set of separate thin vertical bars. An earlier interpretation based only on its name was incorrect. This analysis cross-checked option order, the jump table, POINT array writes, and GDI calls without executing the original DLL. Evidence excerpts, including original disassembly line numbers, are in `evidence/simple-line.txt`.
 
-## 静态证据
+## Static evidence
 
-- 字符串 Simple-line：0x1002BDF0。0x1001F35D–0x1001F3D3 按顺序添加六项，它是索引 5。
-- 0x1000353E–0x1000355D：模式 5 的 spacing 临时值为零。0x10003651–0x10003679：pitch 强制为 2，忽略用户柱宽与间距。
-- 0x100035C9–0x100035DB：模式 5 主动将峰值启用标志清零，即使 Show Peaks 为真。
-- 0x100051D4 跳转表六项依次为 0x10004616、0x10004633、0x10004650、0x10004681、0x100046E0、0x100045D2。
-- 0x100045D2–0x10004611：根据方向选择 x 端点，把 x 和幅度计算得到的 y 写入每声道 POINT 数组，每点 8 字节，没有在这里填充矩形。
-- 0x10004C91 仅允许模式 5 进入；0x10004C9C–0x10004CA8 从 +0xCDC 取颜色，调用 CreatePen(PS_SOLID,1,color)。
-- 0x10004ED3–0x10004EEA 使用数组起点和点数调用 Polyline（IAT 0x1002A020）。此前 0x10004D51–0x10004ED0 还按方向和相邻声道添加边界点。
+- The Simple-line string is at 0x1002BDF0. Six entries are added in order at 0x1001F35D-0x1001F3D3; Simple-line is index 5.
+- At 0x1000353E-0x1000355D, mode 5 sets temporary spacing to zero. At 0x10003651-0x10003679, pitch is forced to 2, ignoring configured bar width and spacing.
+- At 0x100035C9-0x100035DB, mode 5 clears the effective peak flag even when Show Peaks is enabled.
+- The six jump-table entries at 0x100051D4 are 0x10004616, 0x10004633, 0x10004650, 0x10004681, 0x100046E0, and 0x100045D2.
+- At 0x100045D2-0x10004611, direction selects an x endpoint; x and amplitude-derived y are written to a per-channel POINT array, eight bytes per point. This path does not fill a rectangle.
+- Only mode 5 passes 0x10004C91. At 0x10004C9C-0x10004CA8, color is read from +0xCDC and passed to CreatePen(PS_SOLID,1,color).
+- At 0x10004ED3-0x10004EEA, the point-array address and count are passed to Polyline (IAT 0x1002A020). Earlier, 0x10004D51-0x10004ED0 adds boundary points according to direction and neighboring channels.
 
-## 本次移植与有意差异
+## Version 0.2.0 implementation and intentional differences
 
-新增 Simple-line + peaks (contour)：单像素灰度 228 实线轮廓、无填充、2 px 节距，只连接各声道内部有效频率组；没有 bin 的空组不插入零幅度点。左右独立，低频居中。按用户要求额外保留峰值动画，最后用灰度 245 点覆盖绘制；这与原版此模式禁用峰值不同。
+Simple-line + peaks (contour) introduced a one-pixel solid gray-228 outline without fill and with a 2 px pitch. It connected valid frequency groups within each channel, without inserting zero-amplitude points for groups containing no bins. Left/right data remained independent, with low frequencies at the center. At the user's request, peak animation was retained and gray-245 markers drawn last. This intentionally differs from the original, which disables peaks in this mode.
 
-另外新增 Separate thin lines + peaks：1 px 实色竖线、至少 1 px 黑色间距，Spacing 可增加间距，保留峰值。此模式用来满足用户描述的分离竖线效果，不冒充原版 Simple-line。原有 Gradient bars 保留为默认值。
+Separate thin lines + peaks was added as a distinct style: one-pixel solid vertical lines with at least one black pixel between them, configurable extra spacing, and retained peaks. It serves the separate-bar appearance without mislabeling it as the original Simple-line. Gradient bars remained the default.
 
-仍沿用首版简化频率分组。原版用 GDI Polyline，本版用 DIB 整数线段光栅化；未逐像素复刻端点包含规则、频率描述符和跨声道边界补接。幅度公式和峰值状态更新公式没有修改。不能声称完整还原原插件所有样式和旋转路径。
+Version 0.2.0 still used the initial simplified frequency groups and an integer DIB line rasterizer instead of the original GDI Polyline. Endpoint inclusion, exact frequency descriptors, and cross-channel boundary connections were not reproduced pixel for pixel. Amplitude and peak-update formulas were unchanged. This did not establish complete parity for all original styles or rotations.
 
-配置版本升级为 2，共 48 字节，尾部追加样式枚举 0/1/2。版本 1 的 44 字节配置继续读取并使用渐变柱；未知样式回退渐变柱，未知版本和截断数据拒绝。切换样式经 OK 应用后重建映射并清空峰值，Cancel 不应用。
+Configuration version 2 used 48 bytes, appending the style enum 0/1/2. Version 1's 44-byte configuration remained readable, defaulting to gradient bars. Unknown styles fell back to gradient bars; unknown versions and truncated data were rejected. Applying a style through OK rebuilt mapping and cleared peaks; Cancel did not apply changes.
 
-## 验证
+## Validation at version 0.2.0
 
-Release x64 构建通过，离线 3940 项断言通过（包含逐柱检查，不是 3940 个独立案例）。新增检查覆盖：轮廓连接、无填充、不跨声道连接、峰值覆盖、实色竖线间隙、两种线条模式声道隔离与信号结束后峰值保留、窄窗口缓冲区边界。
+The Release x64 build and 3,940 offline assertions passed. This includes per-bar checks, not 3,940 independent cases. Added checks covered connected contours without fill, no cross-channel connection at that version, peak overlay, solid bar gaps, channel isolation in both line styles, peak retention after the signal ends, and narrow-window buffer boundaries.
 
-合成预览位于 build/simple-line-preview.bmp 与 build/separate-lines-preview.bmp，使用插件同一计算与绘制核心。它们不是播放器实测截图。
+`build/simple-line-preview.bmp` and `build/separate-lines-preview.bmp` were generated with the plugin's calculation and rendering core. They are synthetic previews, not player screenshots.
 
-本轮未完成宿主实际加载、设置弹窗交互、保存重启往返或与原版播放画面对照。此前 Computer Use 应用启动授权超时，本轮未重试或修改现有播放器配置。二进制和包验证见 build/verification-0.2.0.json。
+Actual host loading, dialog interaction, save/restart round trips, and playback comparisons with the original were not completed. A previous Computer Use startup authorization had timed out; no retry or modification of the existing player configuration was performed during this phase. Binary/package checks were recorded locally in `build/verification-0.2.0.json`.

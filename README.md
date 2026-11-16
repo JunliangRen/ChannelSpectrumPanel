@@ -1,57 +1,65 @@
 # Channel Spectrum Mirror (x64)
 
-当前实验版本：0.4.0。独立重建的 64 位 foobar2000 2.x / Columns UI 组件，不是原作者官方版本，也不是恢复出的原始源码。**目前尚不能称为完整、逐像素一致的原版移植。**
+Experimental version: **0.4.0**. An independent reconstruction of a spectrum visualization panel for **64-bit foobar2000 2.x with Columns UI**. Full behavioral and pixel-level parity has not yet been established.
 
-## 安装
+## Original component and credit
 
-在 Preferences → Components → Install 选择 `dist/foo_uie_channel_spectrum_x64-0.4.0.fb2k-component`，应用并重启。在 Columns UI 布局添加 Visualisations → Channel Spectrum Mirror。右键 Configure 设置。
+The original **Channel Spectrum panel**, `foo_uie_vis_channel_spectrum`, was developed by **ssenna**. It is a 32-bit Columns UI visualization that displays a separate frequency spectrum for each audio channel. Its mirrored layout and falling peak markers are the reference for this project.
 
-已有 0.1/0.2 配置继续读取，默认保持左右镜像、低频居中、黑底灰白渐变柱和峰值亮点。新配置版本为 3，不支持用旧版组件读取。仅支持 x64 Columns UI；需要对应 x64 MSVC 运行库。
+- [Original author's component release/download page](https://foo2k.chottu.net/) (Japanese): lists **v0.17.2, released May 18, 2008**, and the original requirement of foobar2000 v0.9.5.2 or later with Columns UI.
+- [Original component discussion thread](https://hydrogenaud.io/index.php/topic,59249.0.html), linked from the component's Hydrogenaudio entry.
+- [Hydrogenaudio component entry](https://wiki.hydrogenaud.io/index.php?title=Foobar2000%3AComponents%2FChannel_Spectrum_panel_%28foo_uie_vis_channel_spectrum%29): identifies ssenna, the x86 architecture, and the original component.
 
-## 当前功能
+Credit for the original component belongs to ssenna. This repository is **not an official update, an author-endorsed release, or recovered original source code**. It contains a separately written x64 implementation based on analysis of version 0.17.2. The original DLL is not distributed here. The version numbers of this reconstruction are independent of the original component's releases.
 
-- 原版对应模式：Simple、Horizontal、Vertical、Simple-antialiasing、Horizontal-antialiasing、Simple-line；保留前两版的 Gradient bars、Separate thin lines。
-- Mirror / Right / Left，频率反转、声道位置反转，0/90/180/270 度顺时针旋转。
-- Separate / Merge all / Specified input；可启用全部输入声道，设置 18 项顺序和活动掩码。编号按 18 个扬声器位置，使用宿主 mask 映射实际输入；详见还原记录。
-- 柱宽、间距、分段柱、左右留白、声道间距、面板边框。
-- 五种自定义 RGB 颜色、八色前景和背景调色板。
-- 2 kHz 频率刻度、相对幅度刻度、长短刻度长度；长度 100 表示整个绘图方向长度。
-- 峰值开关、保持时间和下降速度；旧/新 FFT、FFT 大小、幅度曲线和频率轴模式。
-- 父窗口背景和背景缓存、实验性 DirectDraw 扫描线同步；默认关闭。
-- Apply / Cancel / Defaults；`.csm` 新版预设，完整 300 字节原版 `.csp` 和旧 DWORD 边界前缀转换。
+## Installation
 
-Simple-line 原版会禁用峰值，本版按用户要求允许保留。渐变柱和分离细竖线是新增样式，导出为 `.csp` 时会明确拒绝；请使用 `.csm` 保存它们。原版 Separate 没有本项目“强制双声道”扩展，`.csp` 再导入时按全部活动输入声道处理。
+Build the component using the instructions below. In foobar2000, select `dist/foo_uie_channel_spectrum_x64-0.4.0.fb2k-component` through **Preferences > Components > Install**, apply, and restart. Add **Visualisations > Channel Spectrum Mirror** to the Columns UI layout. Right-click the panel and select **Configure**.
 
-## 已验证与限制
+Configurations from versions 0.1/0.2 of this reconstruction remain readable. Defaults retain mirrored left/right channels, bass at the center, gray-white gradient bars on black, and bright peak markers. The current configuration format is version 3; older component versions cannot read it. Only x64 Columns UI is supported. The corresponding x64 MSVC runtime is required.
 
-Release x64 构建和 7696 项离线断言通过；数量包含逐柱边界检查。覆盖配置版本迁移、完整字段往返、旧预设字段/颜色字节序/旧前缀兼容、声道、旋转、样式、峰值、留白和缓冲区边界。
+## Features
 
-独立便携测试副本已成功启动并显示首次 UI 选择窗口，但 Computer Use 无法激活窗口，重试仍返回 `failed to activate captured window`，因此没有完成 Columns UI 面板添加、设置交互、真实音频播放或稳定性验证。用户现有播放器配置未被修改。
+- Original-style modes: Simple, Horizontal, Vertical, Simple-antialiasing, Horizontal-antialiasing, and Simple-line. Gradient bars and Separate thin lines remain available as additional modes.
+- Mirror / Right / Left directions, frequency reversal, channel-position reversal, and 0/90/180/270-degree clockwise rotation.
+- Separate / Merge all / Specified input; optional display of all input channels, with 18 speaker positions and an active mask. Speaker positions map to input channels through the host channel mask.
+- Bar width, spacing, segmented bars, left/right padding, channel gaps, and panel borders.
+- Five base RGB colors and eight-color foreground/background palettes.
+- Frequency ticks at 2 kHz intervals, amplitude ticks, and separate short/long tick lengths. A length of 100 spans the drawing area.
+- Peak visibility, hold time, and fall speed; old/new FFT modes, FFT size, amplitude curves, and frequency-axis scaling.
+- Parent-window background rendering and caching, plus experimental DirectDraw scanline synchronization; disabled by default.
+- Apply / Cancel / Defaults; versioned `.csm` presets, full 300-byte original `.csp` presets, and older DWORD-aligned preset prefixes.
 
-本轮已重建原始四 DWORD 频率描述符：受控 x87/SSE 仿真下，13 组夹具的 17,637 条有效记录零差异。已恢复八档幅度刻度、扬声器映射、原生 GDI 渐变和折线、短预设前缀兼容。
+The original disables peaks in Simple-line mode; this implementation intentionally allows them. Gradient bars and Separate thin lines are additional styles and cannot be exported as original `.csp` presets; use `.csm` instead. The original Separate mode has no equivalent of this project's forced stereo default. Reimporting a `.csp` uses all active input channels.
 
-尚未证明完全一致：所有旋转的边缘像素、跨声道折线端点、bin 0 刻度、不同浮点环境、透明合成/缓存、扫描线调度及真实宿主 FFT 输入。受控仿真不替代原版实际播放对照。详见 [0.4.0 还原记录](analysis/RESTORATION-0.4.md)。
+## Validation and limitations
 
-完整功能状态见 [差异与移植清单](analysis/PARITY.md)，不要将“有同名开关”理解为已验证完全一致。
+The Release x64 build and 7,696 offline assertions passed. The count includes per-bar boundary checks, not 7,696 independent scenarios. Coverage includes configuration migration, field round trips, original preset fields and color byte order, legacy prefixes, channels, rotation, styles, peaks, padding, and buffer boundaries.
 
-## 构建
+Under a controlled x87/SSE emulation profile, 17,637 valid four-DWORD frequency descriptors matched across 13 fixtures. Eight amplitude ticks, speaker mapping, native GDI gradients and polylines, and short preset prefixes have also been implemented.
 
-Windows / Visual Studio C++ v143 / Windows SDK / PowerShell / Git / 7-Zip：
+A separate portable test player reached its initial UI selection dialog, but window automation failed with `failed to activate captured window` after recovery. Columns UI panel creation, settings interaction, actual playback, and stability testing remain incomplete. The existing player configuration was not modified.
+
+Unverified areas include rotation boundary pixels, cross-channel contour endpoints, bin 0 ticks, different floating-point environments, transparency/cache behavior, scanline scheduling, and actual host FFT input. Controlled emulation does not replace playback comparisons with the original. See the [0.4.0 reconstruction record](analysis/RESTORATION-0.4.md) and [parity checklist](analysis/PARITY.md).
+
+## Building
+
+Requirements: Windows, Visual Studio C++ v143 tools including MASM, Windows SDK, PowerShell, Git, and 7-Zip.
 
 ```powershell
 .\scripts\setup-deps.ps1
 .\scripts\build.ps1
 ```
 
-可通过 `-MSBuild` 指定 MSBuild.exe。依赖版本和哈希固定于 setup-deps；输出在 dist/；测试和合成图在 build/。调试 PDB 不包含在安装包中。自有文本使用 UTF-8 / CRLF，第三方 SDK 保留原始文件。
+Use `-MSBuild` to specify an MSBuild.exe path. Dependency versions and hashes are pinned in the setup script. Packages are written to `dist/`; tests and synthetic previews are written to `build/`. Debug PDB files are excluded from the package. Project-authored text uses UTF-8 and CRLF; downloaded SDK files retain their upstream formatting.
 
-[静态分析](analysis/STATIC-ANALYSIS.md) · [首版实现](analysis/IMPLEMENTATION.md) · [Simple-line 分析](analysis/SIMPLE-LINE.md) · [第三方许可](THIRD-PARTY-NOTICES.txt)
+[Static analysis](analysis/STATIC-ANALYSIS.md) | [Initial implementation](analysis/IMPLEMENTATION.md) | [Simple-line analysis](analysis/SIMPLE-LINE.md) | [Third-party notices](THIRD-PARTY-NOTICES.txt)
 
-## 仓库内容与可选指令仿真
+## Repository contents and optional instruction emulation
 
-仓库包含源码、构建/打包脚本、分析记录、精选证据及回归测试夹具。SDK、原版 DLL、完整反汇编、Python 依赖、便携播放器、构建产物与重复仿真输出不提交；已存在的本地文件保留。
+The repository includes source, build/package scripts, analysis notes, selected evidence, and regression fixtures. SDKs, the original DLL, full disassembly, Python dependencies, portable players, build output, and redundant raw emulation output are excluded from Git. Existing local copies are retained.
 
-正常构建及回归测试使用已提交夹具，不需要原版 DLL 或 Python。仅在重新生成原版指令仿真夹具时，需要自行提供 SHA256 匹配的原版 DLL，并执行：
+Normal builds and regression tests use the committed fixtures and do not require Python or the original DLL. To regenerate the instruction-emulation fixtures, provide the original DLL with the expected SHA256 and run:
 
 ```powershell
 python -m pip install --target tools/oracle-deps unicorn==2.1.4 pefile==2024.8.26
@@ -59,4 +67,4 @@ $env:CSP_ORIGINAL_DLL = 'C:\path\to\foo_uie_vis_channel_spectrum.dll'
 python scripts/original_oracle.py
 ```
 
-仿真脚本只执行受控坐标例程，不调用原 DLL 初始化。生成的原始 JSON 被忽略，精简的坐标夹具用于后续回归对照。
+The emulator executes only the controlled coordinate routine and does not initialize the original DLL. Generated raw JSON is ignored; compact coordinate fixtures are retained for regression comparisons.

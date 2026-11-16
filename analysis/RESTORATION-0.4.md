@@ -1,43 +1,43 @@
-# 0.4.0 还原记录
+# Version 0.4.0 reconstruction record
 
-2026-11-16。独立重建 x64 实现，不是原始源码恢复。
+2026-11-16. An independent x64 implementation, not recovered original source. See the [original component attribution and release links](../README.md#original-component-and-credit).
 
-## 频率坐标的指令级对照
+## Instruction-level frequency coordinate comparisons
 
-scripts/original_oracle.py 在 Unicorn 2.1.4 中仅执行原 DLL 的 0x1000B370 坐标构造例程，停止于 0x1000C3A5；没有调用 DLL 初始化，也没有把原 DLL 载入本机进程。容器、清零、CopyRect 和频率阈值辅助调用由受控桩实现。原 DLL SHA256：e5bc0405fd9da2a59d9889fffc6fc21f8e9da71dc972d68c5e5218794a038c4b。
+`scripts/original_oracle.py` executes only the original coordinate routine at 0x1000B370 in Unicorn 2.1.4, stopping at 0x1000C3A5. It does not initialize the DLL or load it for native execution. Controlled stubs implement containers, zeroing, CopyRect, and the frequency-threshold helper. Original DLL SHA256: `e5bc0405fd9da2a59d9889fffc6fc21f8e9da71dc972d68c5e5218794a038c4b`.
 
-原始每 bin 四 DWORD 为 left / draw / right / baseline。一个新边界出现时，原版标记并改写前一个描述符，而不是等宽分桶后逐桶画柱。新版照此聚合重叠 bin 的幅度最大值，再更新该绘制位置的峰值。
+Each bin has four DWORDs: left / draw / right / baseline. When a new boundary appears, the original marks and rewrites the previous descriptor instead of drawing uniform frequency buckets. The reconstruction accumulates maxima across overlapping bins, then updates the peak for the emitted drawing position.
 
-对数映射保留 x87 中间值和部分 double 缓存的取整顺序；src/mapping_x87.asm 为独立编写的 Win64 MASM 算术辅助，进入时保存、退出时恢复 x87 控制字。本次固定仿真 profile：CW=0x027F、原 CRT SSE 截断分支启用、pow 的 x87 分支。尚未测量用户原播放器实际控制字，不能把此 profile 宣称为所有宿主的唯一行为。
+Logarithmic mapping preserves x87 intermediates and the rounding order of selected double caches. `src/mapping_x87.asm` is independently written Win64 MASM arithmetic; it saves and restores the x87 control word. The controlled emulation profile uses CW=0x027F, the original CRT's SSE truncation branch, and x87 pow. The original live player's control word has not been measured; this profile is not claimed to represent every host.
 
-13 组夹具覆盖线性/对数、宽窄窗口、256/1024 bins、二/三声道、节距、间距、方向和声道位置反转。17,637 条 bin>=1 有效描述符逐字段对照为零差异。bin 0 的原始异常边界没有照搬，绘图从 bin 1 开始；这不是全参数穷举。夹具：tests/fixtures/original-coordinates.txt；原始输出：analysis/evidence/original-coordinate-oracle.json（可重新生成，不纳入 Git）。
+Thirteen fixtures cover linear/logarithmic axes, wide/narrow windows, 256/1024 bins, two/three channels, pitch, spacing, direction, and reversed channel positions. All 17,637 valid descriptors with bin>=1 match field for field. The original anomalous bin 0 boundary is not reproduced, and drawing starts at bin 1. This is not exhaustive parameter coverage. Compact fixtures are in `tests/fixtures/original-coordinates.txt`; regenerable raw output is `analysis/evidence/original-coordinate-oracle.json`, excluded from Git.
 
-另外纠正：强制 Right / Left 覆盖 Reverse frequency；Mirror 在单显示声道时翻转方向，来自调用者 0x1000384B–0x10003859。
+Version 0.4.0 also made forced Right/Left override Reverse frequency and added the single-display Mirror flip from 0x1000384B-0x10003859. **Documentation review correction:** the coordinate builder ignores Reverse for forced directions, but its caller swaps direction 1/2 at 0x100035FC-0x1000361C when Reverse is enabled. The current implementation does not reproduce that caller step. The descriptor comparison remains valid for its supplied inputs; it does not prove end-to-end direction parity. No implementation change was made during this documentation revision.
 
-## 刻度与声道
+## Ticks and channels
 
-幅度刻度来自 0x1000C13C–0x1000C39F，为 0 至 -70 dB、10 dB 一档，长短交替。旧 FFT 先计算 0.2309*log2(1+bins*10^(-index/2)) 再使用幅度映射；新 FFT 的相对坐标为 (100/range)*(1-index/7)，log 模式分母改为 8。刻度在整个 padded 图的两侧绘制，不逐声道重复；长度 100 为全宽。夹具检查 y 的容差为 1 像素，不宣称刻度逐像素零差异。
+Amplitude ticks follow 0x1000C13C-0x1000C39F: 0 through -70 dB in 10 dB steps, alternating long and short. Old FFT mode first computes 0.2309*log2(1+bins*10^(-index/2)), then applies amplitude mapping. New FFT mode uses (100/range)*(1-index/7), replacing the denominator with 8 in log mode. Ticks are drawn on both edges of the entire padded graph, not repeated per channel; length 100 spans the width. Fixture comparisons allow a one-pixel y tolerance, not exact pixel parity.
 
-频率刻度落在描述符中心，2 kHz 一档；最初 bin 0 的安全处理和原版构造中途的描述符状态尚未逐项对照。
+Frequency ticks use descriptor centers at 2 kHz intervals. Safe bin 0 handling and the original descriptor state during construction have not been compared individually.
 
-扬声器映射根据原 0x10001580：先检查 speaker bit 是否存在，再统计更低有效位数得到宿主紧凑通道索引。指定声道和排序使用扬声器位置，修正了把它当作连续输入编号的问题。UI 编号 1–18 依次为 FL, FR, FC, LFE, BL, BR, FLC, FRC, BC, SL, SR, TC, TFL, TFC, TFR, TBL, TBC, TBR。
+Speaker mapping follows 0x10001580: check the requested speaker bit, then count lower set bits to obtain the compact host input index. Selection and ordering use speaker positions rather than consecutive input numbers. UI positions 1-18 are FL, FR, FC, LFE, BL, BR, FLC, FRC, BC, SL, SR, TC, TFL, TFC, TFR, TBL, TBC, and TBR.
 
-## GDI 绘制
+## GDI rendering
 
-使用本机内存 DC、32 位 DIB、GradientFill 和 Polyline，替代近似颜色插值与自制折线光栅化。24 色缓存从 foreground2 到 foreground，比例为 index/23；渐变使用 RGB 分量左移 8 位的 TRIVERTEX。背景/Vertical 八色渐变按七段整数边界构建。前景八色只作用于 Vertical；Simple、Horizontal、两种 AA 不再误用该调色板。
+Native memory DCs, 32-bit DIBs, GradientFill, and Polyline replace approximate color interpolation and a custom line rasterizer. A 24-color cache interpolates foreground2 to foreground using index/23. TRIVERTEX color components are shifted left by eight bits. Background and Vertical eight-color gradients use seven integer-bounded segments. The foreground palette applies only to Vertical, not Simple, Horizontal, or either AA style.
 
-两种 AA 是柱顶 blur 百分比高度的背景到前景渐变；blur=0 不再插入一个黑色像素。Simple-line 使用 1 px GDI pen，按物理分区补连接相邻端点。原版是向各声道点数组插入边界点，新版分开调用连接线；方向相关的端点包含、所有旋转路径及全部调色板组合仍需与原版画面逐像素对照。
+Both AA modes fade from background to foreground over a bar-top region whose height is the configured blur percentage. With blur=0, no black pixel is inserted. Simple-line uses a one-pixel GDI pen and connects neighboring physical partitions. The original inserts boundary points into each channel's array, while this implementation uses separate connecting polylines. Direction-dependent endpoint inclusion, all rotations, and all palette combinations still need pixel comparisons with the original.
 
-峰值定点动画和幅度公式继续沿用已恢复实现。Simple-line 保留峰值是用户明确要求的扩展；原版此样式禁用峰值。
+The previously recovered amplitude formulas and fixed-point peak updates remain in use. Peaks in Simple-line are an explicitly requested extension; the original disables them.
 
-## 预设兼容
+## Preset compatibility
 
-原读例程 0x1001D7B0 在 DWORD 边界遇到 EOF 时保留后续配置字段。现在接受 magic + 0 至 74 个 DWORD 的前缀，缺失尾项从调用者当前 Settings 补全；完整 300 字节继续读写。无 magic、非 DWORD 对齐、过长、未知枚举拒绝。尚无原程序真实导出/重新导入的运行时验证。对话框导入使用上次 Apply 的配置作为缺失尾项基线。
+The original reader at 0x1001D7B0 retains later settings when it reaches EOF on a DWORD boundary. Import now accepts magic plus zero through 74 DWORDs, filling missing tail fields from the caller's current Settings. Full 300-byte presets remain readable/writable. Missing magic, non-DWORD alignment, oversized input, and unknown enums are rejected. Runtime export/reimport by the original program is untested. Dialog import uses the last applied settings as the baseline for absent fields.
 
-## 验证边界
+## Validation limits
 
-Release x64 插件及测试构建成功，7696 项断言通过；计数包含逐柱检查，并不代表 7696 个独立场景。13 组描述符夹具对照包含在测试中，另生成三种样式的离线合成图。已检查 Simple-line 合成图，但不是原版播放对照截图。
+Release x64 plugin and test builds passed, with 7,696 assertions. This includes per-bar checks, not 7,696 independent scenarios. The tests include 13 descriptor fixtures and generate three offline style previews. The Simple-line synthetic image was inspected; it is not a screenshot comparison with original playback.
 
-Computer Use 对便携测试副本的首次 UI 选择窗口执行选择时返回 coordinate input geometry is unavailable；刷新选择并激活重试返回 failed to activate captured window。按技能恢复规则停止进一步窗口输入。没有完成 Columns UI 实例化、设置保存重启、真实播放、透明背景或扫描线同步的运行验证。
+Computer Use selection in the portable player's initial UI dialog returned `coordinate input geometry is unavailable`; refreshing the window and retrying activation returned `failed to activate captured window`. Further input stopped after recovery failed. Columns UI instantiation, settings persistence, real playback, transparency, and scanline synchronization were not validated in the host.
 
-后续真实验证必须包括：相同音频/FFT 的 x86 与 x64 对照、四方向边缘像素、原版预设文件、暂停/seek/停止、多面板、DPI/多显示器、透明背景及扫描线。透明与同步当前仍为兼容实现，未声称原版代码路径完全一致。
+Further validation must compare x86/x64 output for the same audio and FFT, boundary pixels in four orientations, actual original presets, pause/seek/stop, multiple panels, DPI/multiple monitors, transparency, and scanline behavior. Transparency and synchronization remain compatibility implementations rather than verified copies of the original paths.
