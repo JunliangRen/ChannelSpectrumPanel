@@ -8,16 +8,17 @@
 #include "preset.h"
 #include "background_save.h"
 #include "resource.h"
+#include "localization.h"
 #include "settings_layout.h"
 #include "color_picker.h"
 #include "channel_selection.h"
 #include "settings_controls.h"
 #include "monitor_events.h"
 namespace {
-struct DialogState { csp::Settings value; std::function<void(const csp::Settings&)> apply; bool changed=false; std::shared_ptr<csp::MonitorEvents> monitor_events; bool monitor_fallback=false; COLORREF custom_colors[16]{}; std::shared_ptr<csp::SaveResult> save; csp::SettingsHeadingFont heading_font; };
+struct DialogState { csp::Settings value; std::function<void(const csp::Settings&)> apply; bool changed=false; std::shared_ptr<csp::MonitorEvents> monitor_events; bool monitor_fallback=false; COLORREF custom_colors[16]{}; std::shared_ptr<csp::SaveResult> save; csp::SettingsHeadingFont heading_font; unsigned language=0; std::function<void(unsigned)> save_language; };
 void combo(HWND w,int id,std::initializer_list<const wchar_t*> labels,unsigned selected){
     SendDlgItemMessage(w,id,CB_RESETCONTENT,0,0);
-    for(auto label:labels)SendDlgItemMessage(w,id,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(label));
+    for(auto label:labels)SendDlgItemMessage(w,id,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(csp::tr(w,label)));
     SendDlgItemMessage(w,id,CB_SETCURSEL,selected,0);
 }
 void update_monitor_label(HWND w,const DialogState& state){
@@ -25,12 +26,12 @@ void update_monitor_label(HWND w,const DialogState& state){
     wchar_t text[192]{};
     const wchar_t* device=monitor.device;
     if(wcsncmp(device,L"\\\\.\\",4)==0)device+=4;
-    if(state.monitor_events && !state.monitor_events->tracking_available())swprintf_s(text,L"Display monitoring unavailable; using manual FPS.");
-    else if(monitor.hz>0)swprintf_s(text,L"Panel monitor: %s - %.3f Hz%s",device,monitor.hz,monitor.precise?L"":L" (integer report)");
+    if(state.monitor_events && !state.monitor_events->tracking_available())swprintf_s(text,csp::tr(w,L"Display monitoring unavailable; using manual FPS."));
+    else if(monitor.hz>0)swprintf_s(text,csp::tr(w,L"Panel monitor: %s - %.3f Hz%s"),device,monitor.hz,monitor.precise?L"":csp::tr(w,L" (integer report)"));
     else {
         wchar_t manualText[64]{};GetDlgItemText(w,IDC_INTERVAL,manualText,64);
         const unsigned manual=csp::parse_target_fps(manualText);
-        swprintf_s(text,L"Monitor rate unavailable; fallback: %u FPS",manual?manual:state.value.target_fps());
+        swprintf_s(text,csp::tr(w,L"Monitor rate unavailable; fallback: %u FPS"),manual?manual:state.value.target_fps());
     }
     wchar_t previous[192]{};GetDlgItemText(w,IDC_MONITOR_RATE,previous,192);
     if(wcscmp(previous,text)!=0)SetDlgItemText(w,IDC_MONITOR_RATE,text);
@@ -39,11 +40,11 @@ void update_monitor_label(HWND w,const DialogState& state){
 void populate(HWND w,const csp::Settings& s){
     unsigned index=0;for(unsigned n=512;n<s.fft;n*=2)++index;
     combo(w,IDC_FFT,{L"512",L"1024",L"2048",L"4096",L"8192"},index);
-    combo(w,IDC_STYLE,{L"Gradient bars (v0.1)",L"Simple-line + peaks",L"Separate thin lines",L"Simple",L"Horizontal",L"Vertical",L"Simple-antialiasing",L"Horizontal-antialiasing"},unsigned(s.style));
-    combo(w,IDC_DIRECTION,{L"Mirror",L"Right",L"Left"},s.direction);
-    combo(w,IDC_ROTATION,{L"No rotation (0)",L"Clockwise 90 degrees",L"Upside down (180)",L"Counterclockwise 90"},s.rotation);
-    combo(w,IDC_CHANNELMODE,{L"Separate",L"Merge all (maximum)",L"Specified input"},s.channel_mode);
-    combo(w,IDC_EDGE,{L"None",L"Sunken",L"Static"},s.edge);
+    combo(w,IDC_STYLE,{csp::tr(w,L"Gradient bars (v0.1)"),csp::tr(w,L"Simple-line + peaks"),csp::tr(w,L"Separate thin lines"),csp::tr(w,L"Simple"),csp::tr(w,L"Horizontal"),csp::tr(w,L"Vertical"),csp::tr(w,L"Simple-antialiasing"),csp::tr(w,L"Horizontal-antialiasing")},unsigned(s.style));
+    combo(w,IDC_DIRECTION,{csp::tr(w,L"Mirror"),csp::tr(w,L"Right"),csp::tr(w,L"Left")},s.direction);
+    combo(w,IDC_ROTATION,{csp::tr(w,L"No rotation (0)"),csp::tr(w,L"Clockwise 90 degrees"),csp::tr(w,L"Upside down (180)"),csp::tr(w,L"Counterclockwise 90")},s.rotation);
+    combo(w,IDC_CHANNELMODE,{csp::tr(w,L"Separate"),csp::tr(w,L"Merge all (maximum)"),csp::tr(w,L"Specified input")},s.channel_mode);
+    combo(w,IDC_EDGE,{csp::tr(w,L"None"),csp::tr(w,L"Sunken"),csp::tr(w,L"Static")},s.edge);
     combo(w,IDC_INTERVAL,{L"30",L"60",L"90",L"120",L"144",L"200"},0);
     {wchar_t fps[32];swprintf_s(fps,L"%u",s.target_fps());SetDlgItemText(w,IDC_INTERVAL,fps);}
     CheckDlgButton(w,IDC_DIRECT2D,s.direct2d?BST_CHECKED:BST_UNCHECKED);
@@ -59,15 +60,15 @@ void populate(HWND w,const csp::Settings& s){
     SetDlgItemInt(w,IDC_GAP,s.channel_gap,FALSE);
     SetDlgItemInt(w,IDC_BLUR,s.blur,FALSE);
     SendDlgItemMessage(w,IDC_SELECTED,CB_RESETCONTENT,0,0);
-    for(const auto* name:csp::speaker_names)if(SendDlgItemMessage(w,IDC_SELECTED,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(name))<0)throw std::runtime_error("Could not populate speaker names.");
+    for(const auto* name:csp::speaker_names)if(SendDlgItemMessage(w,IDC_SELECTED,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(csp::tr(w,name)))<0)throw std::runtime_error("Could not populate speaker names.");
     SendDlgItemMessage(w,IDC_SELECTED,CB_SETCURSEL,s.selected,0);
     csp::numeric_choices(w,IDC_FSHORT,s.short_frequency,false);
     csp::numeric_choices(w,IDC_FLONG,s.long_frequency,false);
     csp::numeric_choices(w,IDC_ASHORT,s.short_amplitude,false);
     csp::numeric_choices(w,IDC_ALONG,s.long_amplitude,false);
     CheckDlgButton(w,IDC_NEWFFT,s.new_fft?BST_CHECKED:BST_UNCHECKED);
-    combo(w,IDC_LOGAMP,{L"Linear",L"Logarithmic"},s.log_amplitude?1:0);
-    combo(w,IDC_LINEAR,{L"Logarithmic",L"Linear"},s.linear_frequency?1:0);
+    combo(w,IDC_LOGAMP,{csp::tr(w,L"Linear"),csp::tr(w,L"Logarithmic")},s.log_amplitude?1:0);
+    combo(w,IDC_LINEAR,{csp::tr(w,L"Logarithmic"),csp::tr(w,L"Linear")},s.linear_frequency?1:0);
     CheckDlgButton(w,IDC_REVFREQ,s.reverse_frequency?BST_CHECKED:BST_UNCHECKED);
     CheckDlgButton(w,IDC_REVCHAN,s.reverse_channels?BST_CHECKED:BST_UNCHECKED);
     CheckDlgButton(w,IDC_PEAKS,s.show_peaks?BST_CHECKED:BST_UNCHECKED);
@@ -90,6 +91,36 @@ void populate(HWND w,const csp::Settings& s){
     csp::populate_channel_list(w,s.order,s.active_mask);
     csp::sync_slider(w,IDC_FALL,IDC_FALL_SLIDER,99);csp::sync_slider(w,IDC_BLUR,IDC_BLUR_SLIDER,100);
     csp::update_setting_dependencies(w);
+}
+// Language changes only relabel controls; drafts and channel identity stay intact.
+void refresh_interface_language(HWND w,DialogState& state){
+    csp::translate_captions(w);
+    SetDlgItemText(w,IDC_LANGUAGE_LABEL,csp::tr(w,L"Language"));
+    SetDlgItemText(w,IDC_LANGUAGE_NOTE,csp::tr(w,L"Interface language is saved automatically."));
+    for(int id:{IDC_STYLE,IDC_DIRECTION,IDC_ROTATION,IDC_CHANNELMODE,IDC_EDGE,IDC_LOGAMP,IDC_LINEAR,IDC_SELECTED}){
+        HWND control=GetDlgItem(w,id);const auto selected=SendMessage(control,CB_GETCURSEL,0,0);
+        const int count=int(SendMessage(control,CB_GETCOUNT,0,0));
+        std::vector<std::wstring> labels;labels.reserve(count);
+        for(int i=0;i<count;++i){const int n=int(SendMessage(control,CB_GETLBTEXTLEN,i,0));if(n<0)throw std::runtime_error("Could not read language choices.");
+            std::wstring text(size_t(n)+1,L'\0');SendMessage(control,CB_GETLBTEXT,i,reinterpret_cast<LPARAM>(text.data()));text.resize(n);labels.emplace_back(csp::tr(w,text.c_str()));}
+        SendMessage(control,CB_RESETCONTENT,0,0);
+        for(const auto& label:labels)if(SendMessage(control,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(label.c_str()))<0)throw std::runtime_error("Could not translate choices.");
+        SendMessage(control,CB_SETCURSEL,selected,0);
+    }
+    for(int id:{IDC_HOLD,IDC_FSHORT,IDC_FLONG,IDC_ASHORT,IDC_ALONG}){
+        HWND control=GetDlgItem(w,id);int n=GetWindowTextLength(control);std::wstring draft(size_t(n)+1,L'\0');GetWindowText(control,draft.data(),n+1);draft.resize(n);
+        bool named=false;const int count=int(SendMessage(control,CB_GETCOUNT,0,0));
+        for(int i=0;i<count;++i){int length=int(SendMessage(control,CB_GETLBTEXTLEN,i,0));if(length!=n)continue;std::wstring label(size_t(n)+1,L'\0');SendMessage(control,CB_GETLBTEXT,i,reinterpret_cast<LPARAM>(label.data()));label.resize(n);if(label==draft)named=true;}
+        unsigned value=0;const bool valid=csp::read_numeric_choice(w,id,id==IDC_HOLD?10000:100,value);
+        csp::numeric_choices(w,id,value,id==IDC_HOLD);
+        if(!named || !valid)SetWindowText(control,draft.c_str());
+    }
+    HWND list=GetDlgItem(w,IDC_ORDER);
+    for(int i=0;i<ListView_GetItemCount(list);++i){LVITEM item{};item.mask=LVIF_PARAM;item.iItem=i;
+        if(ListView_GetItem(list,&item) && item.lParam>=0 && item.lParam<18)ListView_SetItemText(list,i,0,const_cast<wchar_t*>(csp::tr(w,csp::speaker_names[item.lParam])));}
+    csp::update_numeric_tips(w);csp::update_setting_dependencies(w);update_monitor_label(w,state);
+    if(state.save)SetDlgItemText(w,IDC_EXPORT,csp::tr(w,L"Saving..."));
+    InvalidateRect(w,nullptr,TRUE);
 }
 // An invalid draft must remain editable even if its feature was just disabled.
 // Keep the feature checkbox and all saved values unchanged.
@@ -171,7 +202,9 @@ bool read_settings(HWND w,csp::Settings& s){
 }
 bool preset_file(HWND w,csp::Settings& s,bool writing,DialogState* dialog=nullptr){
     wchar_t path[MAX_PATH]=L"";OPENFILENAME ofn{sizeof(ofn)};ofn.hwndOwner=w;
-    ofn.lpstrFilter=writing?L"Mirror preset (*.csm)\0*.csm\0Original 0.17.2 preset (*.csp)\0*.csp\0\0":L"Spectrum presets (*.csm;*.csp)\0*.csm;*.csp\0\0";ofn.lpstrFile=path;ofn.nMaxFile=MAX_PATH;
+    const wchar_t* saveFilters[]={L"Mirror preset (*.csm)\0*.csm\0Original 0.17.2 preset (*.csp)\0*.csp\0\0",L"Mirror 预设 (*.csm)\0*.csm\0原版 0.17.2 预设 (*.csp)\0*.csp\0\0",L"Mirror プリセット (*.csm)\0*.csm\0元の 0.17.2 プリセット (*.csp)\0*.csp\0\0"};
+    const wchar_t* loadFilters[]={L"Spectrum presets (*.csm;*.csp)\0*.csm;*.csp\0\0",L"频谱预设 (*.csm;*.csp)\0*.csm;*.csp\0\0",L"スペクトルプリセット (*.csm;*.csp)\0*.csm;*.csp\0\0"};
+    ofn.lpstrFilter=writing?saveFilters[csp::ui_language(w)]:loadFilters[csp::ui_language(w)];ofn.lpstrFile=path;ofn.nMaxFile=MAX_PATH;
     ofn.lpstrDefExt=L"csm";ofn.Flags=OFN_NOCHANGEDIR|OFN_PATHMUSTEXIST|(writing?OFN_OVERWRITEPROMPT:OFN_FILEMUSTEXIST);
     if(!(writing?GetSaveFileName(&ofn):GetOpenFileName(&ofn)))return false;
     if(writing){
@@ -188,7 +221,7 @@ bool preset_file(HWND w,csp::Settings& s,bool writing,DialogState* dialog=nullpt
         try {dialog->save=csp::start_preset_save(std::filesystem::path(path),std::move(bytes));}
         catch(...){KillTimer(w,2);throw;}
         EnableWindow(GetDlgItem(w,IDC_EXPORT),FALSE);
-        SetDlgItemText(w,IDC_EXPORT,L"Saving...");
+        SetDlgItemText(w,IDC_EXPORT,csp::tr(w,L"Saving..."));
     }else{std::ifstream file(std::filesystem::path(path),std::ios::binary|std::ios::ate);auto length=file.tellg();
         if(length<4 || length>4096 || int(length)%4)throw std::runtime_error("Invalid preset size.");
         file.seekg(0);std::vector<unsigned char> bytes(static_cast<size_t>(length));file.read(reinterpret_cast<char*>(bytes.data()),bytes.size());
@@ -199,7 +232,7 @@ bool preset_file(HWND w,csp::Settings& s,bool writing,DialogState* dialog=nullpt
 INT_PTR CALLBACK settings_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp){
     auto* state=reinterpret_cast<DialogState*>(GetWindowLongPtr(w,DWLP_USER));
     try{
-        if(msg==WM_INITDIALOG){state=reinterpret_cast<DialogState*>(lp);SetWindowLongPtr(w,DWLP_USER,lp);csp::initialize_numeric_controls(w);populate(w,state->value);csp::initialize_settings_tabs(w);state->heading_font.initialize(w);if(state->monitor_events)state->monitor_events->attach_dialog(w);if(state->monitor_fallback && state->monitor_events)state->monitor_events->set_polling_active(SetTimer(w,3,5000,nullptr)!=0);update_monitor_label(w,*state);return TRUE;}
+        if(msg==WM_INITDIALOG){state=reinterpret_cast<DialogState*>(lp);SetWindowLongPtr(w,DWLP_USER,lp);csp::set_ui_language(w,state->language);csp::initialize_numeric_controls(w);populate(w,state->value);csp::initialize_settings_tabs(w);state->heading_font.initialize(w);combo(w,IDC_LANGUAGE,{L"English",L"简体中文",L"日本語"},state->language<3?state->language:0);refresh_interface_language(w,*state);if(state->monitor_events)state->monitor_events->attach_dialog(w);if(state->monitor_fallback && state->monitor_events)state->monitor_events->set_polling_active(SetTimer(w,3,5000,nullptr)!=0);update_monitor_label(w,*state);return TRUE;}
         if(msg==WM_HSCROLL){const int id=GetDlgCtrlID(reinterpret_cast<HWND>(lp));
             if(id==IDC_FALL_SLIDER || id==IDC_BLUR_SLIDER){SetDlgItemInt(w,id==IDC_FALL_SLIDER?IDC_FALL:IDC_BLUR,unsigned(SendMessage(reinterpret_cast<HWND>(lp),TBM_GETPOS,0,0)),FALSE);return TRUE;}
         }
@@ -210,7 +243,7 @@ INT_PTR CALLBACK settings_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp){
         if(msg==csp::MonitorEvents::changed_message && state){update_monitor_label(w,*state);return TRUE;}
         if(msg==WM_TIMER && wp==3 && state && state->monitor_fallback){if(state->monitor_events)state->monitor_events->refresh(true);return TRUE;}
         if(msg==WM_DESTROY){
-            KillTimer(w,3);
+            RemoveProp(w,L"CspUiLanguage");RemoveProp(w,L"CspNumericTips");KillTimer(w,3);
             if(state && state->monitor_events)state->monitor_events->detach_dialog(w);
             KillTimer(w,2);if(state)state->save.reset();SetWindowLongPtr(w,DWLP_USER,0);return FALSE;
         }
@@ -218,12 +251,17 @@ INT_PTR CALLBACK settings_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp){
             const auto status=state->save->status.load(std::memory_order_acquire);
             if(status!=csp::SaveStatus::running){
                 auto result=std::move(state->save);KillTimer(w,2);
-                EnableWindow(GetDlgItem(w,IDC_EXPORT),TRUE);SetDlgItemText(w,IDC_EXPORT,L"Export...");
-                if(status==csp::SaveStatus::failed)MessageBoxA(w,result->error,"Preset save failed",MB_OK|MB_ICONERROR);
+                EnableWindow(GetDlgItem(w,IDC_EXPORT),TRUE);SetDlgItemText(w,IDC_EXPORT,csp::tr(w,L"Export..."));
+                if(status==csp::SaveStatus::failed)csp::show_localized_error(w,result->error,L"Preset save failed");
             }
             return TRUE;
         }
         if(msg==WM_COMMAND && state){auto id=LOWORD(wp);
+            if(id==IDC_LANGUAGE && HIWORD(wp)==CBN_SELCHANGE){
+                const int language=int(SendDlgItemMessage(w,IDC_LANGUAGE,CB_GETCURSEL,0,0));
+                if(language>=0 && language<3){csp::set_ui_language(w,unsigned(language));refresh_interface_language(w,*state);state->language=unsigned(language);if(state->save_language)state->save_language(state->language);}
+                return TRUE;
+            }
             if(id==IDC_INTERVAL && (HIWORD(wp)==CBN_EDITCHANGE || HIWORD(wp)==CBN_SELCHANGE)){PostMessage(w,csp::MonitorEvents::changed_message,0,0);return TRUE;}
             if(id==IDC_FOLLOW_MONITOR){update_monitor_label(w,*state);csp::update_setting_dependencies(w);return TRUE;}
             if(id>=IDC_COLOR_FIRST && id<=IDC_COLOR_LAST && HIWORD(wp)==BN_CLICKED){csp::choose_setting_color(w,id,state->custom_colors);return TRUE;}
@@ -241,12 +279,12 @@ INT_PTR CALLBACK settings_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp){
             if(id==IDCANCEL){EndDialog(w,IDCANCEL);return TRUE;}
             if(id==IDC_IMPORT){auto next=state->value;if(preset_file(w,next,false)){state->value.interval=next.interval;state->value.fps_milli=next.fps_milli;populate(w,next);}return TRUE;}
             if(id==IDOK || id==IDC_APPLY || id==IDC_EXPORT){auto next=state->value;
-                if(!read_settings(w,next)){MessageBox(w,L"Target FPS must be a whole number from 10 to 200. Choose a listed value or type a number for custom hold time / tick lengths. The invalid field is selected and enabled for correction. Check numeric ranges and RGB colors.",L"Invalid settings",MB_OK|MB_ICONWARNING);return TRUE;}
+                if(!read_settings(w,next)){MessageBox(w,csp::tr(w,L"Target FPS must be a whole number from 10 to 200. Choose a listed value or type a number for custom hold time / tick lengths. The invalid field is selected and enabled for correction. Check numeric ranges and RGB colors."),csp::tr(w,L"Invalid settings"),MB_OK|MB_ICONWARNING);return TRUE;}
                 if(id==IDC_EXPORT){if(!state->save)preset_file(w,next,true,state);return TRUE;}
                 state->apply(next);state->value=next;state->changed=true;if(id==IDOK)EndDialog(w,IDOK);return TRUE;
             }
         }
-    }catch(const std::exception& e){MessageBoxA(w,e.what(),"Channel Spectrum Mirror",MB_OK|MB_ICONERROR);return TRUE;}
+    }catch(const std::exception& e){csp::show_localized_error(w,e.what(),L"Channel Spectrum Mirror");return TRUE;}
     return FALSE;
 }
 }

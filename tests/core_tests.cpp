@@ -21,9 +21,11 @@ void check_close(double a,double b,const char* name){check(std::abs(a-b)<1e-9,na
 #include "monitor_events_tests.h"
 #include "settings_options_tests.h"
 #include "d2d_tests.h"
+#include "localization_tests.h"
 int main(int argc,char** argv) {
  try {
     settings_options_tests();
+    localization_tests();
     d2d_tests();
     monitor_events_tests();
     fps_tests();

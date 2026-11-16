@@ -5,6 +5,7 @@
 #include <array>
 #include <stdexcept>
 #include "resource.h"
+#include "localization.h"
 namespace csp {
 inline constexpr const wchar_t* speaker_names[]={L"Front left",L"Front right",L"Front center",L"LFE",L"Back left",L"Back right",L"Front left of center",L"Front right of center",L"Back center",L"Side left",L"Side right",L"Top center",L"Top front left",L"Top front center",L"Top front right",L"Top back left",L"Top back center",L"Top back right"};
 inline std::array<unsigned,18> default_channel_order(){std::array<unsigned,18> order{};for(unsigned i=0;i<18;++i)order[i]=i;return order;}
@@ -18,7 +19,7 @@ inline void populate_channel_list(HWND dialog,const std::array<unsigned,18>& ord
     ListView_DeleteAllItems(list);
     for(unsigned i=0;i<18;++i){
         if(order[i]>=18)throw std::runtime_error("Invalid speaker position.");
-        LVITEM item{};item.mask=LVIF_TEXT|LVIF_PARAM;item.iItem=i;item.pszText=const_cast<wchar_t*>(speaker_names[order[i]]);item.lParam=order[i];
+        LVITEM item{};item.mask=LVIF_TEXT|LVIF_PARAM;item.iItem=i;item.pszText=const_cast<wchar_t*>(tr(dialog,speaker_names[order[i]]));item.lParam=order[i];
         if(ListView_InsertItem(list,&item)<0)throw std::runtime_error("Could not populate the channel list.");
         ListView_SetCheckState(list,i,(mask&(1u<<order[i]))!=0);
     }

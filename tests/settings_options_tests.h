@@ -6,10 +6,12 @@ namespace palette_test {
 inline HHOOK hook=nullptr;
 inline unsigned action=0;
 inline bool visited=false;
+inline unsigned seen_language=99;
+inline std::wstring seen_title;
 inline constexpr wchar_t draft[]=L"112233,223344,334455,445566,556677,667788,778899,8899AA";
 inline LRESULT CALLBACK activate(int code,WPARAM wp,LPARAM lp){
     if(code==HCBT_ACTIVATE && GetDlgItem(reinterpret_cast<HWND>(wp),IDC_PALETTE_TEXT)){
-        HWND dialog=reinterpret_cast<HWND>(wp);visited=true;
+        HWND dialog=reinterpret_cast<HWND>(wp);visited=true;seen_language=csp::ui_language(dialog);wchar_t title[128]{};GetWindowText(dialog,title,128);seen_title=title;
         SetDlgItemText(dialog,IDC_PALETTE_TEXT,draft);
         PostMessage(dialog,action==2?WM_CLOSE:WM_COMMAND,action==0?IDOK:IDCANCEL,0);
     }

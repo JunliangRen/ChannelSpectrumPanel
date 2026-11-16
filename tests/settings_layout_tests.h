@@ -49,10 +49,16 @@ inline void settings_layout_tests(){
     for(HWND child=GetWindow(dialog,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT)){
         const int id=GetDlgCtrlID(child);
         check(std::find(ids.begin(),ids.end(),id)==ids.end(),"settings resource has unique child IDs");ids.push_back(id);
-        const bool global=id==IDC_SETTINGS_TAB || id==IDC_RESET || id==IDC_IMPORT || id==IDC_EXPORT || id==IDC_APPLY || id==IDOK || id==IDCANCEL || id==IDC_FGCOLORS || id==IDC_BGCOLORS;
+        const bool global=id==IDC_LANGUAGE || id==IDC_LANGUAGE_LABEL || id==IDC_LANGUAGE_NOTE || id==IDC_SETTINGS_TAB || id==IDC_RESET || id==IDC_IMPORT || id==IDC_EXPORT || id==IDC_APPLY || id==IDOK || id==IDCANCEL || id==IDC_FGCOLORS || id==IDC_BGCOLORS;
         check(global || csp::settings_page(id)>=0,"every label and control belongs to a page or the common footer");
     }
-    RECT content{18,28,413,248};MapDialogRect(dialog,&content);
+    auto isGroup=[](HWND child){wchar_t type[32]{};GetClassName(child,type,32);return wcscmp(type,L"Button")==0 && (GetWindowLongPtr(child,GWL_STYLE)&BS_TYPEMASK)==BS_GROUPBOX;};
+    int groupCount=0;
+    for(HWND child=GetWindow(dialog,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT))if(isGroup(child)){
+        ++groupCount;check(!(GetWindowLongPtr(child,GWL_STYLE)&WS_TABSTOP),"group boxes do not add keyboard tab stops");
+    }
+    check(groupCount==11,"exactly eleven native group boxes");
+    RECT content{12,26,414,248};MapDialogRect(dialog,&content);
     for(int page=0;page<5;++page){
         csp::show_settings_page(dialog,page);
         std::vector<std::pair<int,RECT>> occupied;
@@ -65,9 +71,22 @@ inline void settings_layout_tests(){
             check(rect.left>=content.left && rect.top>=content.top && rect.right<=content.right && rect.bottom<=content.bottom,"settings control fits inside tab content");
             for(const auto& previous:occupied){RECT overlap{};
                 const bool intersects=IntersectRect(&overlap,&rect,&previous.second)!=FALSE;
-                const bool collision=intersects && overlap.right-overlap.left>2 && overlap.bottom-overlap.top>2;
+                const bool currentGroup=isGroup(child),previousGroup=isGroup(GetDlgItem(dialog,previous.first));
+                const RECT& outer=currentGroup?rect:previous.second;const RECT& inner=currentGroup?previous.second:rect;
+                const bool containment=currentGroup!=previousGroup && inner.left>=outer.left && inner.top>=outer.top && inner.right<=outer.right && inner.bottom<=outer.bottom;
+                const bool collision=intersects && overlap.right-overlap.left>2 && overlap.bottom-overlap.top>2 && !containment;
                 if(collision)std::cerr<<"Settings overlap: "<<previous.first<<" and "<<GetDlgCtrlID(child)<<"\n";
                 check(!collision,"same-page settings controls do not overlap");
+            }
+            if(!isGroup(child)){
+                int containers=0;
+                for(HWND group=GetWindow(dialog,GW_CHILD);group;group=GetWindow(group,GW_HWNDNEXT))if(isGroup(group) && csp::settings_page(GetDlgCtrlID(group))==page){
+                    RECT bounds{};GetWindowRect(group,&bounds);MapWindowPoints(nullptr,dialog,reinterpret_cast<POINT*>(&bounds),2);
+                    RECT inset{4,14,4,4};MapDialogRect(dialog,&inset);
+                    if(rect.left>=bounds.left+inset.left && rect.top>=bounds.top+inset.top && rect.right<=bounds.right-inset.right && rect.bottom<=bounds.bottom-inset.bottom)++containers;
+                }
+                if(containers!=1)std::cerr<<"Invalid group membership: "<<GetDlgCtrlID(child)<<"\n";
+                check(containers==1,"each page control fits one group with title and border clearance");
             }
             occupied.push_back({GetDlgCtrlID(child),rect});
             wchar_t type[32]{},text[256]{};GetClassName(child,type,32);GetWindowText(child,text,256);

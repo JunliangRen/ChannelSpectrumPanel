@@ -2,6 +2,7 @@
 #include <commdlg.h>
 #include <cwchar>
 #include "resource.h"
+#include "localization.h"
 namespace csp {
 inline int color_field(int button) noexcept {
     constexpr int fields[]={IDC_FG,IDC_FG2,IDC_BG,IDC_PEAKCOLOR,IDC_TICKCOLOR};
@@ -40,7 +41,7 @@ inline void choose_setting_color(HWND dialog,int button,COLORREF* custom){
     const int count=index<5?1:8,slot=index<5?0:index<13?index-5:index-13;
     unsigned values[8]{};
     if(!read_color_values(dialog,field,values,count)){
-        MessageBox(dialog,L"Enter valid RGB hex colors before opening the picker (eight comma-separated colors for a palette).",L"Invalid color",MB_OK|MB_ICONWARNING);
+        MessageBox(dialog,csp::tr(dialog,L"Enter valid RGB hex colors before opening the picker (eight comma-separated colors for a palette)."),csp::tr(dialog,L"Invalid color"),MB_OK|MB_ICONWARNING);
         SetFocus(GetDlgItem(dialog,field));return;
     }
     CHOOSECOLOR picker{sizeof(picker)};picker.hwndOwner=dialog;picker.rgbResult=rgb_to_colorref(values[slot]);picker.lpCustColors=custom;picker.Flags=CC_FULLOPEN|CC_RGBINIT;
@@ -72,11 +73,11 @@ namespace csp {
 struct PaletteEditor {wchar_t text[256]{};const wchar_t* title;bool accepted=false;};
 inline INT_PTR CALLBACK palette_editor_proc(HWND dialog,UINT message,WPARAM wp,LPARAM lp){
     auto* editor=reinterpret_cast<PaletteEditor*>(GetWindowLongPtr(dialog,DWLP_USER));
-    if(message==WM_INITDIALOG){editor=reinterpret_cast<PaletteEditor*>(lp);SetWindowLongPtr(dialog,DWLP_USER,lp);SetWindowText(dialog,editor->title);SendDlgItemMessage(dialog,IDC_PALETTE_TEXT,EM_SETLIMITTEXT,255,0);SetDlgItemText(dialog,IDC_PALETTE_TEXT,editor->text);return TRUE;}
+    if(message==WM_INITDIALOG){editor=reinterpret_cast<PaletteEditor*>(lp);SetWindowLongPtr(dialog,DWLP_USER,lp);SetWindowText(dialog,editor->title);SetDlgItemText(dialog,IDC_PALETTE_HELP,tr(dialog,L"Eight RGB hex colors, separated by commas. Copy or paste the entire palette."));SetDlgItemText(dialog,IDOK,tr(dialog,L"OK"));SetDlgItemText(dialog,IDCANCEL,tr(dialog,L"Cancel"));SendDlgItemMessage(dialog,IDC_PALETTE_TEXT,EM_SETLIMITTEXT,255,0);SetDlgItemText(dialog,IDC_PALETTE_TEXT,editor->text);return TRUE;}
     if(message==WM_COMMAND && editor){
         if(LOWORD(wp)==IDCANCEL){EndDialog(dialog,IDCANCEL);return TRUE;}
         if(LOWORD(wp)==IDOK){unsigned values[8]{};
-            if(!read_color_values(dialog,IDC_PALETTE_TEXT,values,8)){MessageBox(dialog,L"Enter exactly eight RGB hex colors separated by commas.",L"Invalid palette",MB_OK|MB_ICONWARNING);return TRUE;}
+            if(!read_color_values(dialog,IDC_PALETTE_TEXT,values,8)){MessageBox(dialog,csp::tr(dialog,L"Enter exactly eight RGB hex colors separated by commas."),csp::tr(dialog,L"Invalid palette"),MB_OK|MB_ICONWARNING);return TRUE;}
             GetDlgItemText(dialog,IDC_PALETTE_TEXT,editor->text,256);editor->accepted=true;EndDialog(dialog,IDOK);return TRUE;
         }
     }
@@ -84,7 +85,7 @@ inline INT_PTR CALLBACK palette_editor_proc(HWND dialog,UINT message,WPARAM wp,L
     return FALSE;
 }
 inline void edit_palette(HWND parent,int field){
-    PaletteEditor editor{};editor.title=field==IDC_FGCOLORS?L"Foreground palette - advanced":L"Background palette - advanced";
+    PaletteEditor editor{};editor.title=field==IDC_FGCOLORS?csp::tr(parent,L"Foreground palette - advanced"):csp::tr(parent,L"Background palette - advanced");
     GetDlgItemText(parent,field,editor.text,256);
     auto module=reinterpret_cast<HINSTANCE>(GetWindowLongPtr(parent,GWLP_HINSTANCE));
     if(DialogBoxParam(module,MAKEINTRESOURCE(IDD_PALETTE),parent,palette_editor_proc,reinterpret_cast<LPARAM>(&editor))==IDOK && editor.accepted){SetDlgItemText(parent,field,editor.text);refresh_color_buttons(parent);}

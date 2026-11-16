@@ -2,7 +2,7 @@ param([ValidateSet('x86','x64','arm64ec')][string]$Architecture = 'x64')
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
 $root = Split-Path $PSScriptRoot -Parent
-$out = Join-Path $root "dist\foo_uie_channel_spectrum_$Architecture-1.0.fb2k-component"
+$out = Join-Path $root "dist\foo_uie_channel_spectrum_$Architecture-1.1.fb2k-component"
 $dll = Join-Path $root "dist\$Architecture\foo_uie_channel_spectrum_$Architecture.dll"
 if (!(Test-Path -LiteralPath $dll)) { throw 'Build the DLL before packaging.' }
 # Reject stale or wrong-architecture DLLs before creating an installable package.

@@ -6,24 +6,25 @@
 #include <stdexcept>
 #include <initializer_list>
 #include "resource.h"
+#include "localization.h"
 #include "spectrum.h"
 namespace csp {
 inline void numeric_choices(HWND dialog,int id,unsigned value,bool hold){
     HWND combo=GetDlgItem(dialog,id);SendMessage(combo,CB_RESETCONTENT,0,0);
     const unsigned lengths[]={0,3,7,15,100},times[]={0,100,250,500};
-    const wchar_t* names[]={L"Hidden",L"Short",L"Medium",L"Long",L"Full"};
+    const wchar_t* names[]={csp::tr(dialog,L"Hidden"),csp::tr(dialog,L"Short"),csp::tr(dialog,L"Medium"),csp::tr(dialog,L"Long"),csp::tr(dialog,L"Full")};
     bool found=false;int selected=0;
     for(unsigned i=0;i<(hold?4u:5u);++i){
         unsigned number=hold?times[i]:lengths[i];wchar_t label[64]{};
-        if(hold)swprintf_s(label,number?L"%u ms":L"No hold (%u ms)",number);
-        else if(number==100)swprintf_s(label,L"Full span");
-        else if(number==0)swprintf_s(label,L"Hidden");
+        if(hold)swprintf_s(label,number?L"%u ms":csp::tr(dialog,L"No hold (%u ms)"),number);
+        else if(number==100)swprintf_s(label,csp::tr(dialog,L"Full span"));
+        else if(number==0)swprintf_s(label,csp::tr(dialog,L"Hidden"));
         else swprintf_s(label,L"%s (%u px)",names[i],number);
         auto index=SendMessage(combo,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(label));
         if(index<0)throw std::runtime_error("Could not populate numeric choices.");
         SendMessage(combo,CB_SETITEMDATA,index,number);if(number==value){selected=int(index);found=true;}
     }
-    if(!found){wchar_t label[64]{};swprintf_s(label,hold?L"Custom: %u ms":L"Custom: %u px",value);
+    if(!found){wchar_t label[64]{};swprintf_s(label,hold?csp::tr(dialog,L"Custom: %u ms"):csp::tr(dialog,L"Custom: %u px"),value);
         auto index=SendMessage(combo,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(label));if(index<0)throw std::runtime_error("Could not populate custom value.");
         SendMessage(combo,CB_SETITEMDATA,index,value);selected=int(index);
     }
@@ -52,10 +53,20 @@ inline void initialize_numeric_controls(HWND dialog){
     SendDlgItemMessage(dialog,IDC_BLUR_SLIDER,TBM_SETRANGE,TRUE,MAKELPARAM(0,100));
     HWND tip=CreateWindowEx(WS_EX_TOPMOST,TOOLTIPS_CLASS,nullptr,WS_POPUP|TTS_ALWAYSTIP,0,0,0,0,dialog,nullptr,reinterpret_cast<HINSTANCE>(GetWindowLongPtr(dialog,GWLP_HINSTANCE)),nullptr);
     if(tip){
+        SetProp(dialog,L"CspNumericTips",tip);
         SendMessage(tip,TTM_SETMAXTIPWIDTH,0,300);
         for(int id:{IDC_HOLD,IDC_FSHORT,IDC_FLONG,IDC_ASHORT,IDC_ALONG}){
             TOOLINFO tool{sizeof(tool)};tool.uFlags=TTF_IDISHWND|TTF_SUBCLASS;tool.hwnd=dialog;tool.uId=reinterpret_cast<UINT_PTR>(GetDlgItem(dialog,id));
-            tool.lpszText=const_cast<wchar_t*>(id==IDC_HOLD?L"Choose a preset or type an exact hold time in milliseconds.":L"Choose a preset or type an exact value: 0 hides ticks, 1-99 is pixels, and 100 spans the graph.");SendMessage(tip,TTM_ADDTOOL,0,reinterpret_cast<LPARAM>(&tool));
+            tool.lpszText=const_cast<wchar_t*>(id==IDC_HOLD?csp::tr(dialog,L"Choose a preset or type an exact hold time in milliseconds."):csp::tr(dialog,L"Choose a preset or type an exact value: 0 hides ticks, 1-99 is pixels, and 100 spans the graph."));SendMessage(tip,TTM_ADDTOOL,0,reinterpret_cast<LPARAM>(&tool));
+        }
+    }
+}
+inline void update_numeric_tips(HWND dialog){
+    if(auto tip=reinterpret_cast<HWND>(GetProp(dialog,L"CspNumericTips"))){
+        SendMessage(tip,TTM_SETMAXTIPWIDTH,0,300);
+        for(int id:{IDC_HOLD,IDC_FSHORT,IDC_FLONG,IDC_ASHORT,IDC_ALONG}){
+            TOOLINFO tool{sizeof(tool)};tool.uFlags=TTF_IDISHWND|TTF_SUBCLASS;tool.hwnd=dialog;tool.uId=reinterpret_cast<UINT_PTR>(GetDlgItem(dialog,id));
+            tool.lpszText=const_cast<wchar_t*>(id==IDC_HOLD?csp::tr(dialog,L"Choose a preset or type an exact hold time in milliseconds."):csp::tr(dialog,L"Choose a preset or type an exact value: 0 hides ticks, 1-99 is pixels, and 100 spans the graph."));SendMessage(tip,TTM_UPDATETIPTEXT,0,reinterpret_cast<LPARAM>(&tool));
         }
     }
 }
@@ -76,10 +87,10 @@ inline void update_setting_dependencies(HWND dialog) noexcept {
     enable(IDC_SELECTED,mode==2);enable(IDC_ALLCHANNELS,mode==0);
     for(int id:{IDC_ORDER,IDC_CHANNEL_ALL,IDC_CHANNEL_NONE})enable(id,listed);
     for(int id:{IDC_ORDER_UP,IDC_ORDER_DOWN,IDC_ORDER_RESET})enable(id,ordered);
-    SetDlgItemText(dialog,2206,ordered?L"Enabled channels / list order":
-        mode==1?L"Enabled channels (merged)":
-        mode==2?L"List unused: specified input selected":
-        L"List unused: enable all inputs first");
+    SetDlgItemText(dialog,2206,ordered?csp::tr(dialog,L"Enabled channels / list order"):
+        mode==1?csp::tr(dialog,L"Enabled channels (merged)"):
+        mode==2?csp::tr(dialog,L"List unused: specified input selected"):
+        csp::tr(dialog,L"List unused: enable all inputs first"));
     enable(IDC_FASTTRANS,checked(IDC_TRANSPARENT));enable(IDC_INTERVAL,!checked(IDC_FOLLOW_MONITOR));
     const auto style=static_cast<Style>(SendDlgItemMessage(dialog,IDC_STYLE,CB_GETCURSEL,0,0));
     const bool vertical=style==Style::Vertical,blur=style==Style::SimpleAntialias || style==Style::HorizontalAntialias;
@@ -90,11 +101,11 @@ inline void update_setting_dependencies(HWND dialog) noexcept {
     for(int id:{IDC_FG,1300,2106})enable(id,!foregroundPalette);
     const bool twoColors=style==Style::GradientBars || style==Style::Horizontal || style==Style::HorizontalAntialias || (vertical && !foregroundPalette);
     for(int id:{IDC_FG2,1301,2107})enable(id,twoColors);
-    SetDlgItemText(dialog,3101,vertical?L"Low to high: click a color to edit it.":L"Not used by this style. Select Vertical to use this palette.");
+    SetDlgItemText(dialog,3101,vertical?csp::tr(dialog,L"Low to high: click a color to edit it."):csp::tr(dialog,L"Not used by this style. Select Vertical to use this palette."));
     enable(IDC_BGPALETTE,!checked(IDC_TRANSPARENT));
     for(int i=1305;i<=1312;++i)enable(i,foregroundPalette);
     for(int i=1313;i<=1320;++i)enable(i,checked(IDC_BGPALETTE) && !checked(IDC_TRANSPARENT));
     enable(IDC_FG_ADVANCED,foregroundPalette);enable(IDC_BG_ADVANCED,checked(IDC_BGPALETTE) && !checked(IDC_TRANSPARENT));
-    SetDlgItemText(dialog,3402,!checked(IDC_DIRECT2D)?L"Selected backend: GDI.":checked(IDC_TRANSPARENT)?L"Draft requires GDI: parent background is enabled.":checked(IDC_SEGMENTED)?L"Draft requires GDI: segmented bars are enabled.":L"Direct2D preferred; device failure can still trigger GDI fallback.");
+    SetDlgItemText(dialog,3402,!checked(IDC_DIRECT2D)?csp::tr(dialog,L"Selected backend: GDI."):checked(IDC_TRANSPARENT)?csp::tr(dialog,L"Draft requires GDI: parent background is enabled."):checked(IDC_SEGMENTED)?csp::tr(dialog,L"Draft requires GDI: segmented bars are enabled."):csp::tr(dialog,L"Direct2D preferred; device failure can still trigger GDI fallback."));
 }
 }

@@ -11,9 +11,9 @@
 #include "runtime_state.h"
 #include <uxtheme.h>
 
-DECLARE_COMPONENT_VERSION("Channel Spectrum Mirror", "1.0",
+DECLARE_COMPONENT_VERSION("Channel Spectrum Mirror", "1.1",
     "Columns UI stereo spectrum for x86, x64 and ARM64EC. Independent reconstruction inspired by Channel Spectrum panel 0.17.2.\n"
-    "Mirrored channels, original amplitude curves and fixed-point falling peaks. Experimental first version.");
+    "Mirrored channels, original amplitude curves and fixed-point falling peaks. English, Simplified Chinese and Japanese settings.");
 #if defined(_M_ARM64EC)
 VALIDATE_COMPONENT_FILENAME("foo_uie_channel_spectrum_arm64ec.dll");
 #elif defined(_WIN64)
@@ -24,6 +24,7 @@ VALIDATE_COMPONENT_FILENAME("foo_uie_channel_spectrum_x86.dll");
 
 namespace {
 constexpr GUID panel_guid={0x0c45a893,0x4607,0x4914,{0x8e,0x64,0x21,0x89,0xb3,0xa2,0x79,0x70}};
+cfg_uint interface_language({0xf1469e93,0x8e1d,0x482c,{0xa5,0xb6,0x93,0x58,0xab,0xa0,0x23,0xa1}},0);
 constexpr wchar_t window_class[]=L"ChannelSpectrumMirror.1";
 
 class Panel : public uie::window, private play_callback_impl_base {
@@ -46,6 +47,8 @@ public:
                 background_cache_.clear();start_timer();InvalidateRect(window_,nullptr,FALSE);
             }
         }};
+        dialog.language=unsigned(interface_language.get_value())<3?unsigned(interface_language.get_value()):0;
+        dialog.save_language=[](unsigned language){interface_language=language;};
         dialog.monitor_events=monitor_events_;
         if(!window_){dialog.monitor_events=std::make_shared<csp::MonitorEvents>();dialog.monitor_fallback=!dialog.monitor_events->bind(parent);}
         INITCOMMONCONTROLSEX controls{sizeof(controls),ICC_TAB_CLASSES|ICC_LISTVIEW_CLASSES|ICC_BAR_CLASSES|ICC_UPDOWN_CLASS};
