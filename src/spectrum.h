@@ -134,13 +134,13 @@ public:
     // Input is bin-major interleaved spectrum, never PCM. -1 denotes a missing channel.
     void update(std::span<const double> spectrum, unsigned bins, unsigned channels,
                 int leftChannel, int rightChannel, int width, int height,
-                uint32_t now, const Settings& settings, unsigned sample_rate=48000,uint32_t channel_mask=0) {
+                uint32_t now, const Settings& settings, unsigned sample_rate=48000,uint32_t channel_mask=0,bool advance_peaks=true) {
         Settings s = settings; s.sanitize();
         if (width < 2 || height < 1 || bins < 2 || channels < 1 ||
-            bins > spectrum.size()/channels) { bars_.clear(); ticks_.clear(); return; }
+            bins > spectrum.size()/channels) { reset(); return; }
         // Absent layout: retain positional behavior. A supplied layout uses speaker identities.
         if(!channel_mask)channel_mask=(1u<<std::min(channels,18u))-1;
-        std::vector<unsigned> ordered;
+        ordered_.clear();auto& ordered=ordered_;
         for(unsigned n:s.order)if(s.active_mask&(1u<<n)){
             int input=speaker_input(n,channel_mask,channels);
             if(input>=0)ordered.push_back(unsigned(input));
@@ -149,10 +149,13 @@ public:
         if(!displays){reset();return;}
         if (channels != channels_ || leftChannel != left_ || rightChannel != right_ || displays!=displays_ || channel_mask!=channel_mask_) reset();
         channel_mask_=channel_mask;channels_=channels;left_=leftChannel;right_=rightChannel;displays_=displays;
-        if(width!=width_ || height!=height_ || bins!=bins_ || !(s==settings_))build(width,height,bins,s);
+        if(width!=width_ || height!=height_ || bins!=bins_ || !(s==settings_)){
+            // A failed rebuild must not leave cached dimensions pointing at partial vectors.
+            try {build(width,height,bins,s);} catch(...) {reset();throw;}
+        }
         bars_.clear();ticks_.clear();if(extent_<=0)return;
         for(unsigned side=0;side<displays;++side) {
-            std::vector<double> values(peaks_[side].size(),0);
+            values_.resize(peaks_[side].size());std::fill(values_.begin(),values_.end(),0.0);auto& values=values_;
             auto accumulate=[&](int channel){
                 if(channel<0 || unsigned(channel)>=channels)return;
                 for(unsigned k=1;k<bins;++k){
@@ -186,7 +189,8 @@ public:
                 double q=amplitude(pending,bins,s);pending=0;
                 int y=height-int(std::min(double(height),height*q));
                 if(s.segmented && s.style!=Style::SimpleLine)y&=~1;
-                auto& peak=peaks_[side][j];peak.update(y,now,s,height);
+                auto& peak=peaks_[side][j];
+                if(advance_peaks || !peak.initialized)peak.update(y,now,s,height);
                 int a=start+desc.left,b=start+desc.right;
                 if(s.style==Style::SimpleLine){if(!increasing)a=b;b=a+1;}
                 else if(s.style==Style::SeparateLines){if(!increasing)a=b-1;b=a+1;}
@@ -231,6 +235,8 @@ private:
     std::vector<std::vector<Peak>> peaks_;
     unsigned displays_=2;
     int extent_=0,shift_=0;
+    std::vector<unsigned> ordered_;
+    std::vector<double> values_;
     std::vector<Bar> bars_;
     std::vector<Tick> ticks_;
 };

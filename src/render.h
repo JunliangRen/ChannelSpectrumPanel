@@ -3,6 +3,7 @@
 #include "spectrum.h"
 #include "gdi_render.h"
 namespace csp {
+struct RenderCache {GradientCache gradients;ContourCache contour;};
 // DIB rasterizer: connected one-pixel contour, no area fill or antialiasing.
 inline void line(uint32_t* pixels,int width,int height,int x0,int y0,int x1,int y1,uint32_t color=0xe4e4e4) {
     const int dx=std::abs(x1-x0),sx=x0<x1?1:-1,dy=-std::abs(y1-y0),sy=y0<y1?1:-1;
@@ -22,12 +23,13 @@ inline uint32_t mix(uint32_t a,uint32_t b,double t) {
 inline uint32_t palette(const std::array<uint32_t,8>& colors,double value){
     double p=std::clamp(value,0.0,1.0)*7;unsigned i=std::min(6u,unsigned(p));return mix(colors[i],colors[i+1],p-i);
 }
-inline void render(uint32_t* pixels,int width,int height,const std::vector<Bar>& bars,const Settings& s,bool preserve_background=false,std::span<const Tick> ticks={}) {
+inline void render(uint32_t* pixels,int width,int height,const std::vector<Bar>& bars,const Settings& s,bool preserve_background=false,std::span<const Tick> ticks={},RenderCache* cache=nullptr) {
     if(width<=0 || height<=0)return;
-    static thread_local GradientCache gradients;gradients.update(height,s);
+    RenderCache local;auto& state=cache?*cache:local;
+    auto& gradients=state.gradients;gradients.update(height,s);
     if(!preserve_background)for(int y=0;y<height;++y)std::fill_n(pixels+size_t(y)*width,width,gradients.background[y]);
     if(s.style==Style::SimpleLine) {
-        original_contour(pixels,width,height,bars,s.foreground);
+        original_contour(pixels,width,height,bars,s.foreground,state.contour);
     } else for(const auto& b:bars) {
         const int top=std::clamp(b.top,0,height);
         for(int y=top;y<height;++y){
@@ -36,9 +38,9 @@ inline void render(uint32_t* pixels,int width,int height,const std::vector<Bar>&
             if(s.style==Style::GradientBars)color=mix(s.foreground,s.foreground2,double(y-top)/std::max(1,height-1-top));
             else if(s.style==Style::Vertical)color=gradients.foreground[y];
             else if(s.style==Style::Horizontal || s.style==Style::HorizontalAntialias)
-                color=horizontal_color(s,unsigned(std::clamp(int(b.level*24),0,23)));
+                color=horizontal_color(s,level_color_index(b.level));
             if((s.style==Style::SimpleAntialias || s.style==Style::HorizontalAntialias) && y-top<gradients.blur){
-                unsigned index=s.style==Style::SimpleAntialias?23:unsigned(std::clamp(int(b.level*24),0,23));
+                unsigned index=s.style==Style::SimpleAntialias?23:level_color_index(b.level);
                 color=gradients.antialias[index][y-top];
             }
             for(int x=std::max(0,b.left);x<std::min(width,b.right);++x)pixels[size_t(y)*width+x]=color;
@@ -52,6 +54,7 @@ inline void render(uint32_t* pixels,int width,int height,const std::vector<Bar>&
     Settings s;s.style=style;render(pixels,width,height,bars,s);
 }
 inline void rotate_pixels(const uint32_t* source,int w,int h,uint32_t* target,unsigned rotation) {
+    if(rotation==0){if(source!=target)std::copy_n(source,size_t(w)*h,target);return;}
     const int outputWidth=(rotation&1)?h:w;
     for(int y=0;y<h;++y)for(int x=0;x<w;++x){
         int dx=x,dy=y;
@@ -60,5 +63,10 @@ inline void rotate_pixels(const uint32_t* source,int w,int h,uint32_t* target,un
         if(rotation==3){dx=y;dy=w-1-x;}
         target[size_t(dy)*outputWidth+dx]=source[size_t(y)*w+x];
     }
+}
+// Zero rotation renders directly into the destination DIB; other rotations use scratch.
+inline uint32_t* render_target(uint32_t* destination,int w,int h,unsigned rotation,std::vector<uint32_t>& scratch){
+    if(!rotation)return destination;
+    scratch.resize(size_t(w)*h);return scratch.data();
 }
 }

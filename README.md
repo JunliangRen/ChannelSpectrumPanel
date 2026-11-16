@@ -1,6 +1,6 @@
 # Channel Spectrum Mirror (x86 / x64)
 
-Experimental version: **0.5.0**. An independent reconstruction of a spectrum visualization panel for **32-bit or 64-bit foobar2000 2.x with matching Columns UI**. Full behavioral and pixel-level parity has not yet been established.
+Experimental version: **0.5.1**. An independent reconstruction of a spectrum visualization panel for **32-bit or 64-bit foobar2000 2.x with matching Columns UI**. Full behavioral and pixel-level parity has not yet been established.
 
 ## Original component and credit
 
@@ -14,9 +14,11 @@ Credit for the original component belongs to ssenna. This repository is **not an
 
 ## Installation
 
-Build the component using the instructions below. In foobar2000, select the matching `dist/foo_uie_channel_spectrum_x86-0.5.0.fb2k-component` or `dist/foo_uie_channel_spectrum_x64-0.5.0.fb2k-component` through **Preferences > Components > Install**, apply, and restart. Add **Visualisations > Channel Spectrum Mirror** to the Columns UI layout. Right-click the panel and select **Configure**.
+Build the component using the instructions below. In foobar2000, select the matching `dist/foo_uie_channel_spectrum_x86-0.5.1.fb2k-component` or `dist/foo_uie_channel_spectrum_x64-0.5.1.fb2k-component` through **Preferences > Components > Install**, apply, and restart. Add **Visualisations > Channel Spectrum Mirror** to the Columns UI layout. Right-click the panel and select **Configure**.
 
 Configurations from versions 0.1/0.2 of this reconstruction remain readable. Defaults retain mirrored left/right channels, bass at the center, gray-white gradient bars on black, and bright peak markers. The current configuration format is version 3; older component versions cannot read it. The player, Columns UI, component, and MSVC runtime must use matching architectures. Both builds use the same configuration format and panel GUID. Supporting x86 does not establish compatibility with foobar2000 1.x or older Windows versions.
+
+Version 0.5.1 fixes exception cleanup, allocation-failure recovery, stale snapshots, extreme-level color conversion, and truncated preset imports. Preset export runs in the background; closing the settings dialog does not cancel an export already started. A second save to the same normalized path is rejected until the first job finishes; different paths may save concurrently. See the [stability review](analysis/STABILITY-0.5.1.md).
 
 Version 0.5.0 adds dual-architecture builds; see the [architecture and validation notes](analysis/DUAL-ARCHITECTURE.md).
 
@@ -38,7 +40,7 @@ The original disables peaks in Simple-line mode; this implementation intentional
 
 ## Validation and limitations
 
-Both Release builds pass 9,104 offline assertions per test invocation. Each architecture runs three preview styles; corresponding previews match byte for byte. The count includes per-bar boundary checks, not 9,104 independent scenarios. New checks exercise mapping under all four caller rounding modes and verify restoration of floating-point control state. Coverage includes configuration migration, field round trips, original preset fields and color byte order, legacy prefixes, channels, rotation, styles, peaks, padding, and buffer boundaries.
+Both Release builds pass 10,497 offline assertions per test invocation. Each architecture runs three preview styles; corresponding previews match byte for byte. The count includes per-bar boundary checks, not 10,497 independent scenarios. Coverage also includes mapping under all four caller rounding modes, floating-point control-state restoration, allocation-failure recovery, GDI cleanup under exceptions, renderer cache isolation, invalid-frame recovery, truncated preset rejection, per-panel cache isolation, allocation-free warmed C++ frame buffers, one-time stopped repaint, and exception-safe logging. Coverage includes configuration migration, field round trips, original preset fields and color byte order, legacy prefixes, channels, rotation, styles, peaks, padding, and buffer boundaries.
 
 Under a controlled x87/SSE emulation profile, 17,637 valid four-DWORD frequency descriptors matched across 13 fixtures. Eight amplitude ticks, speaker mapping, native GDI gradients and polylines, and short preset prefixes have also been implemented.
 

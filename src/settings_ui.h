@@ -5,10 +5,11 @@
 #include <sstream>
 #include <functional>
 #include "config.h"
-#include "original_config.h"
+#include "preset.h"
+#include "background_save.h"
 #include "resource.h"
 namespace {
-struct DialogState { csp::Settings value; std::function<void(const csp::Settings&)> apply; bool changed=false; };
+struct DialogState { csp::Settings value; std::function<void(const csp::Settings&)> apply; bool changed=false; std::shared_ptr<csp::SaveResult> save; };
 void combo(HWND w,int id,std::initializer_list<const wchar_t*> labels,unsigned selected){
     SendDlgItemMessage(w,id,CB_RESETCONTENT,0,0);
     for(auto label:labels)SendDlgItemMessage(w,id,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(label));
@@ -126,7 +127,7 @@ bool read_settings(HWND w,csp::Settings& s){
     {wchar_t mask[32];GetDlgItemText(w,IDC_ACTIVEMASK,mask,32);wchar_t* end=nullptr;auto value=wcstoul(mask,&end,16);if(end==mask || *end || value>0x3ffff)return false;s.active_mask=value;}
     s.sanitize();return true;
 }
-bool preset_file(HWND w,csp::Settings& s,bool writing){
+bool preset_file(HWND w,csp::Settings& s,bool writing,DialogState* dialog=nullptr){
     wchar_t path[MAX_PATH]=L"";OPENFILENAME ofn{sizeof(ofn)};ofn.hwndOwner=w;
     ofn.lpstrFilter=writing?L"Mirror preset (*.csm)\0*.csm\0Original 0.17.2 preset (*.csp)\0*.csp\0\0":L"Spectrum presets (*.csm;*.csp)\0*.csm;*.csp\0\0";ofn.lpstrFile=path;ofn.nMaxFile=MAX_PATH;
     ofn.lpstrDefExt=L"csm";ofn.Flags=OFN_NOCHANGEDIR|OFN_PATHMUSTEXIST|(writing?OFN_OVERWRITEPROMPT:OFN_FILEMUSTEXIST);
@@ -135,32 +136,45 @@ bool preset_file(HWND w,csp::Settings& s,bool writing){
         bool original=ofn.nFilterIndex==2 || _wcsicmp(std::filesystem::path(path).extension().c_str(),L".csp")==0;
         auto words=csp::encode(s);
         if(original && !csp::encode_original_csp(s,words))throw std::runtime_error("This added style has no original equivalent. Export .csm instead.");
-        std::ofstream file(std::filesystem::path(path),std::ios::binary);
-        if(!original)file.write("CSMX",4);for(uint32_t word:words)for(int i=0;i<4;++i)file.put(char(word>>(i*8)));
-        if(!file)throw std::runtime_error("Could not write preset.");
+        std::vector<unsigned char> bytes;
+        if(!original)bytes={'C','S','M','X'};
+        for(uint32_t word:words)for(int i=0;i<4;++i)bytes.push_back(static_cast<unsigned char>(word>>(i*8)));
+        if(!dialog)throw std::runtime_error("Missing save dialog state.");
+        if(!SetTimer(w,2,100,nullptr))throw std::runtime_error("Could not monitor background save.");
+        try {dialog->save=csp::start_preset_save(std::filesystem::path(path),std::move(bytes));}
+        catch(...){KillTimer(w,2);throw;}
+        EnableWindow(GetDlgItem(w,IDC_EXPORT),FALSE);
+        SetDlgItemText(w,IDC_EXPORT,L"Saving...");
     }else{std::ifstream file(std::filesystem::path(path),std::ios::binary|std::ios::ate);auto length=file.tellg();
         if(length<4 || length>4096 || int(length)%4)throw std::runtime_error("Invalid preset size.");
         file.seekg(0);std::vector<unsigned char> bytes(static_cast<size_t>(length));file.read(reinterpret_cast<char*>(bytes.data()),bytes.size());
         if(!file)throw std::runtime_error("Could not read preset.");
-        bool mirror=memcmp(bytes.data(),"CSMX",4)==0;
-        std::vector<uint32_t> words;for(size_t i=mirror?4:0;i<bytes.size();i+=4)words.push_back(uint32_t(bytes[i])|uint32_t(bytes[i+1])<<8|uint32_t(bytes[i+2])<<16|uint32_t(bytes[i+3])<<24);
-        if(mirror){if(!csp::decode(words,s))throw std::runtime_error("Unsupported or truncated preset.");}
-        else {
-            if(!csp::decode_original_csp(words,s))throw std::runtime_error("Unsupported original .csp fields or format; the current settings are unchanged.");
-        }
+        if(!csp::decode_preset(bytes,s))throw std::runtime_error("Unsupported or truncated preset; the current settings are unchanged.");
     }return true;
 }
 INT_PTR CALLBACK settings_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp){
     auto* state=reinterpret_cast<DialogState*>(GetWindowLongPtr(w,DWLP_USER));
     try{
         if(msg==WM_INITDIALOG){state=reinterpret_cast<DialogState*>(lp);SetWindowLongPtr(w,DWLP_USER,lp);populate(w,state->value);return TRUE;}
+        if(msg==WM_DESTROY){
+            KillTimer(w,2);if(state)state->save.reset();SetWindowLongPtr(w,DWLP_USER,0);return FALSE;
+        }
+        if(msg==WM_TIMER && wp==2 && state && state->save){
+            const auto status=state->save->status.load(std::memory_order_acquire);
+            if(status!=csp::SaveStatus::running){
+                auto result=std::move(state->save);KillTimer(w,2);
+                EnableWindow(GetDlgItem(w,IDC_EXPORT),TRUE);SetDlgItemText(w,IDC_EXPORT,L"Export...");
+                if(status==csp::SaveStatus::failed)MessageBoxA(w,result->error,"Preset save failed",MB_OK|MB_ICONERROR);
+            }
+            return TRUE;
+        }
         if(msg==WM_COMMAND && state){auto id=LOWORD(wp);
             if(id==IDC_RESET){populate(w,csp::Settings{});return TRUE;}
             if(id==IDCANCEL){EndDialog(w,IDCANCEL);return TRUE;}
             if(id==IDC_IMPORT){auto next=state->value;if(preset_file(w,next,false))populate(w,next);return TRUE;}
             if(id==IDOK || id==IDC_APPLY || id==IDC_EXPORT){auto next=state->value;
                 if(!read_settings(w,next)){MessageBox(w,L"Check numeric ranges, RGB hex colors, and channel order (each number 1-18 exactly once).",L"Invalid settings",MB_OK|MB_ICONWARNING);return TRUE;}
-                if(id==IDC_EXPORT){preset_file(w,next,true);return TRUE;}
+                if(id==IDC_EXPORT){if(!state->save)preset_file(w,next,true,state);return TRUE;}
                 state->apply(next);state->value=next;state->changed=true;if(id==IDOK)EndDialog(w,IDOK);return TRUE;
             }
         }

@@ -2,7 +2,7 @@ param([ValidateSet('x86','x64')][string]$Architecture = 'x64')
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
 $root = Split-Path $PSScriptRoot -Parent
-$out = Join-Path $root "dist\foo_uie_channel_spectrum_$Architecture-0.5.0.fb2k-component"
+$out = Join-Path $root "dist\foo_uie_channel_spectrum_$Architecture-0.5.1.fb2k-component"
 $dll = Join-Path $root "dist\$Architecture\foo_uie_channel_spectrum_$Architecture.dll"
 if (!(Test-Path -LiteralPath $dll)) { throw 'Build the DLL before packaging.' }
 # Reject stale or wrong-architecture DLLs before creating an installable package.
@@ -16,6 +16,7 @@ $zip = [IO.Compression.ZipArchive]::new([IO.File]::Open($out,[IO.FileMode]::Crea
 try {
     $files = @{
         $dllEntry = $dll
+        'analysis/STABILITY-0.5.1.md' = (Join-Path $root 'analysis/STABILITY-0.5.1.md')
         'analysis/DUAL-ARCHITECTURE.md' = (Join-Path $root 'analysis/DUAL-ARCHITECTURE.md')
         'analysis/RESTORATION-0.4.md' = (Join-Path $root 'analysis/RESTORATION-0.4.md')
         'analysis/DIRECTION-0.4.1.md' = (Join-Path $root 'analysis/DIRECTION-0.4.1.md')

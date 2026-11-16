@@ -10,8 +10,20 @@
 int checks=0;
 void check(bool ok,const char* name) {++checks;if(!ok)throw std::runtime_error(name);}
 void check_close(double a,double b,const char* name){check(std::abs(a-b)<1e-9,name);}
+#include "stability_tests.h"
+#include "performance_tests.h"
+#include "recovery_tests.h"
+#include "async_save_tests.h"
+#include "save_conflict_tests.h"
+#include "reservation_stress_tests.h"
 int main(int argc,char** argv) {
  try {
+    stability_tests();
+    performance_tests();
+    recovery_tests();
+    async_save_tests();
+    save_conflict_tests();
+    reservation_stress_tests();
     // The assembly helper must preserve the caller's rounding mode and stack
     // across repeated calls, and return the same pixels in either ABI.
     unsigned int savedControl=0;

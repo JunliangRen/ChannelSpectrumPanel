@@ -3,6 +3,33 @@
 #include <stdexcept>
 #include "spectrum.h"
 namespace csp {
+// EndPaint must run even if allocation or rendering throws.
+class PaintSession {
+public:
+    explicit PaintSession(HWND window):window_(window),dc(BeginPaint(window,&paint_)){}
+    ~PaintSession(){EndPaint(window_,&paint_);}
+    PaintSession(const PaintSession&)=delete;PaintSession& operator=(const PaintSession&)=delete;
+private:
+    HWND window_;PAINTSTRUCT paint_{};
+public:
+    HDC dc;
+};
+class SelectedPen {
+public:
+    SelectedPen(HDC dc,COLORREF color):dc_(dc),pen_(CreatePen(PS_SOLID,1,color)){
+        if(!pen_)throw std::runtime_error("CreatePen failed");
+        old_=SelectObject(dc_,pen_);
+        if(!old_ || old_==HGDI_ERROR){DeleteObject(pen_);throw std::runtime_error("SelectObject pen failed");}
+    }
+    ~SelectedPen(){SelectObject(dc_,old_);DeleteObject(pen_);}
+    SelectedPen(const SelectedPen&)=delete;SelectedPen& operator=(const SelectedPen&)=delete;
+private:HDC dc_;HPEN pen_;HGDIOBJ old_;
+};
+inline unsigned level_color_index(double level){
+    if(!(level>0))return 0;
+    if(level>=1)return 23;
+    return unsigned(level*24);
+}
 // Memory DC only: use the same GDI GradientFill / Polyline raster rules as the x86 panel.
 class GdiSurface {
 public:
@@ -15,7 +42,9 @@ public:
         bi.bmiHeader.biHeight=-h;bi.bmiHeader.biPlanes=1;bi.bmiHeader.biBitCount=32;bi.bmiHeader.biCompression=BI_RGB;
         bitmap=CreateDIBSection(dc,&bi,DIB_RGB_COLORS,reinterpret_cast<void**>(&pixels),nullptr,0);
         if(!bitmap){clear();throw std::runtime_error("CreateDIBSection failed");}
-        old=SelectObject(dc,bitmap);width=w;height=h;
+        old=SelectObject(dc,bitmap);
+        if(!old || old==HGDI_ERROR){old=nullptr;clear();throw std::runtime_error("SelectObject bitmap failed");}
+        width=w;height=h;
     }
     void gradient(int top,int bottom,uint32_t first,uint32_t last){
         if(bottom<=top)return;
@@ -50,23 +79,32 @@ struct GradientCache {
             GdiFlush();out.assign(surface.pixels,surface.pixels+length);
             for(auto& p:out)p&=0xffffff;
         };
-        fill(background,h,s.background_palette,s.background_colors,s.background,s.background);
-        fill(foreground,h,s.foreground_palette,s.foreground_colors,horizontal_color(s,23),horizontal_color(s,0));
-        for(unsigned n=0;n<24;++n)fill(antialias[n],blur,false,s.foreground_colors,s.background,horizontal_color(s,n));
+        if(s.background_palette)fill(background,h,true,s.background_colors,s.background,s.background);
+        else background.assign(h,s.background);
+        if(s.style==Style::Vertical)fill(foreground,h,s.foreground_palette,s.foreground_colors,horizontal_color(s,23),horizontal_color(s,0));
+        else foreground.clear();
+        for(unsigned n=0;n<24;++n){
+            if(s.style==Style::HorizontalAntialias || (s.style==Style::SimpleAntialias && n==23))
+                fill(antialias[n],blur,false,s.foreground_colors,s.background,horizontal_color(s,n));
+            else antialias[n].clear();
+        }
         valid=true;
     }
 };
-inline void original_contour(uint32_t* pixels,int w,int h,const std::vector<Bar>& bars,uint32_t color){
+struct ContourCache {
+    GdiSurface surface;
+    std::array<std::vector<POINT>,18> channels;
+    std::vector<size_t> physical;
+};
+inline void original_contour(uint32_t* pixels,int w,int h,const std::vector<Bar>& bars,uint32_t color,ContourCache& cache){
     if(bars.empty())return;
-    static thread_local GdiSurface surface;surface.resize(w,h);
+    auto& surface=cache.surface;surface.resize(w,h);
     std::copy_n(pixels,size_t(w)*h,surface.pixels);
-    HPEN pen=CreatePen(PS_SOLID,1,RGB((color>>16)&255,(color>>8)&255,color&255));
-    if(!pen)throw std::runtime_error("CreatePen failed");
-    HGDIOBJ old=SelectObject(surface.dc,pen);
-    std::vector<std::vector<POINT>> channels;
-    for(const auto& b:bars){if(channels.size()<=b.channel)channels.resize(b.channel+1);channels[b.channel].push_back({b.left,b.top});}
+    SelectedPen pen(surface.dc,RGB((color>>16)&255,(color>>8)&255,color&255));
+    auto& channels=cache.channels;for(auto& points:channels)points.clear();
+    for(const auto& b:bars)if(b.channel<channels.size())channels[b.channel].push_back({b.left,b.top});
     // Boundary points connect adjacent physical channel partitions, preserving each channel's samples.
-    std::vector<size_t> physical;for(size_t n=0;n<channels.size();++n)if(!channels[n].empty())physical.push_back(n);
+    auto& physical=cache.physical;physical.clear();for(size_t n=0;n<channels.size();++n)if(!channels[n].empty())physical.push_back(n);
     auto leftmost=[&](size_t n){return std::min(channels[n].front().x,channels[n].back().x);};
     std::sort(physical.begin(),physical.end(),[&](auto a,auto b){return leftmost(a)<leftmost(b);});
     for(auto& points:channels)if(points.size()>1)Polyline(surface.dc,points.data(),int(points.size()));
@@ -75,7 +113,7 @@ inline void original_contour(uint32_t* pixels,int w,int h,const std::vector<Bar>
         POINT link[]={a.front().x>a.back().x?a.front():a.back(),b.front().x<b.back().x?b.front():b.back()};
         Polyline(surface.dc,link,2);
     }
-    GdiFlush();SelectObject(surface.dc,old);DeleteObject(pen);
+    GdiFlush();
     std::copy_n(surface.pixels,size_t(w)*h,pixels);
     for(size_t i=0;i<size_t(w)*h;++i)pixels[i]&=0xffffff;
 }
