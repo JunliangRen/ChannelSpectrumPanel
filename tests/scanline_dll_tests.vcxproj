@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+ <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Release|ARM64EC"><Configuration>Release</Configuration><Platform>ARM64EC</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration></ItemGroup>
+ <PropertyGroup Label="Globals"><ProjectGuid>{E66A4325-6435-4D43-A9CF-8E9F2A6532AF}</ProjectGuid><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+ <PropertyGroup Label="Configuration"><ConfigurationType>Application</ConfigurationType><PlatformToolset>v143</PlatformToolset><CharacterSet>Unicode</CharacterSet></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+ <PropertyGroup><CspArch Condition="'$(Platform)'=='Win32'">x86</CspArch><CspArch Condition="'$(Platform)'=='x64'">x64</CspArch><CspArch Condition="'$(Platform)'=='ARM64EC'">arm64ec</CspArch><CspArch Condition="'$(CspPortableMapping)'=='true'">$(CspArch)-portable</CspArch><CspMappingDefine Condition="'$(CspPortableMapping)'=='true'">CSP_PORTABLE_MAPPING</CspMappingDefine><OutDir>$(ProjectDir)..\build\$(CspArch)\tests\</OutDir><IntDir>$(ProjectDir)..\build\$(CspArch)\scanline-dll-tests\obj\</IntDir></PropertyGroup>
+ <ItemDefinitionGroup><MASM Condition="'$(Platform)'=='Win32'"><UseSafeExceptionHandlers>true</UseSafeExceptionHandlers></MASM><ClCompile><LanguageStandard>stdcpp20</LanguageStandard><RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary><ExceptionHandling>Sync</ExceptionHandling><PreprocessorDefinitions>NOMINMAX;UNICODE;_UNICODE;$(CspMappingDefine);%(PreprocessorDefinitions)</PreprocessorDefinitions><AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions></ClCompile><Link><AdditionalDependencies>msimg32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies><SubSystem>Console</SubSystem></Link></ItemDefinitionGroup>
+ <ItemGroup><ClCompile Include="scanline_dll_tests.cpp" /></ItemGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+</Project>

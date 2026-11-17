@@ -1,4 +1,4 @@
-param([string]$Package = (Join-Path $PSScriptRoot '../dist/foo_uie_channel_spectrum-1.3.fb2k-component'))
+param([string]$Package = (Join-Path $PSScriptRoot '../dist/foo_uie_channel_spectrum-1.3.1.fb2k-component'))
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent

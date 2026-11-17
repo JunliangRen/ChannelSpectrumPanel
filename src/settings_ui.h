@@ -15,7 +15,7 @@
 #include "settings_controls.h"
 #include "monitor_events.h"
 namespace {
-struct DialogState { csp::Settings value; std::function<void(const csp::Settings&)> apply; bool changed=false; std::shared_ptr<csp::MonitorEvents> monitor_events; bool monitor_fallback=false; COLORREF custom_colors[16]{}; std::shared_ptr<csp::SaveResult> save; csp::SettingsHeadingFont heading_font; unsigned language=0; std::function<void(unsigned)> save_language; };
+struct DialogState { csp::Settings value; std::function<void(const csp::Settings&)> apply; bool changed=false; std::shared_ptr<csp::MonitorEvents> monitor_events; bool monitor_fallback=false; COLORREF custom_colors[16]{}; std::shared_ptr<csp::SaveResult> save; csp::SettingsHeadingFont heading_font; unsigned language=0; std::function<void(unsigned)> save_language; std::function<void(HWND)> initialized; };
 void combo(HWND w,int id,std::initializer_list<const wchar_t*> labels,unsigned selected){
     SendDlgItemMessage(w,id,CB_RESETCONTENT,0,0);
     for(auto label:labels)SendDlgItemMessage(w,id,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(csp::tr(w,label)));
@@ -232,7 +232,7 @@ bool preset_file(HWND w,csp::Settings& s,bool writing,DialogState* dialog=nullpt
 INT_PTR CALLBACK settings_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp){
     auto* state=reinterpret_cast<DialogState*>(GetWindowLongPtr(w,DWLP_USER));
     try{
-        if(msg==WM_INITDIALOG){state=reinterpret_cast<DialogState*>(lp);SetWindowLongPtr(w,DWLP_USER,lp);csp::set_ui_language(w,state->language);csp::initialize_numeric_controls(w);populate(w,state->value);csp::initialize_settings_tabs(w);state->heading_font.initialize(w);combo(w,IDC_LANGUAGE,{L"English",L"简体中文",L"日本語"},state->language<3?state->language:0);refresh_interface_language(w,*state);if(state->monitor_events)state->monitor_events->attach_dialog(w);if(state->monitor_fallback && state->monitor_events)state->monitor_events->set_polling_active(SetTimer(w,3,5000,nullptr)!=0);update_monitor_label(w,*state);return TRUE;}
+        if(msg==WM_INITDIALOG){state=reinterpret_cast<DialogState*>(lp);SetWindowLongPtr(w,DWLP_USER,lp);csp::set_ui_language(w,state->language);csp::initialize_numeric_controls(w);populate(w,state->value);csp::initialize_settings_tabs(w);state->heading_font.initialize(w);combo(w,IDC_LANGUAGE,{L"English",L"简体中文",L"日本語"},state->language<3?state->language:0);refresh_interface_language(w,*state);if(state->monitor_events)state->monitor_events->attach_dialog(w);if(state->monitor_fallback && state->monitor_events)state->monitor_events->set_polling_active(SetTimer(w,3,5000,nullptr)!=0);update_monitor_label(w,*state);if(state->initialized)state->initialized(w);return TRUE;}
         if(msg==WM_HSCROLL){const int id=GetDlgCtrlID(reinterpret_cast<HWND>(lp));
             if(id==IDC_FALL_SLIDER || id==IDC_BLUR_SLIDER){SetDlgItemInt(w,id==IDC_FALL_SLIDER?IDC_FALL:IDC_BLUR,unsigned(SendMessage(reinterpret_cast<HWND>(lp),TBM_GETPOS,0,0)),FALSE);return TRUE;}
         }

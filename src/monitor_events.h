@@ -10,14 +10,18 @@ public:
     using Query=MonitorRefresh(*)(HWND);
     using Locate=HMONITOR(*)(HWND);
     explicit MonitorEvents(Query query=query_monitor_refresh,Locate locate=locate_monitor):query_(query),locate_(locate){}
+    static constexpr wchar_t identity_property[]=L"CspSettingsMonitorTarget";
+    explicit MonitorEvents(HANDLE identity,Query query=query_monitor_refresh,Locate locate=locate_monitor):MonitorEvents(query,locate){identity_=identity;}
     MonitorEvents(const MonitorEvents&)=delete;
     MonitorEvents& operator=(const MonitorEvents&)=delete;
     ~MonitorEvents(){stop();}
     const MonitorRefresh& current() const noexcept {return current_;}
     bool bind(HWND panel,bool simulate_hook_failure=false){
-        if(panel_==panel && receiver_)return hook_!=nullptr;
+        if(panel_==panel && receiver_)return valid_panel() && hook_!=nullptr;
         HWND observer=panel_==panel?dialog_:nullptr;
-        stop();panel_=panel;dialog_=observer;refresh(true);
+        stop();panel_=panel;dialog_=observer;
+        if(!valid_panel())return false;
+        refresh(true);
         HMODULE module=nullptr;
         GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
             reinterpret_cast<LPCWSTR>(&window_proc),&module);
@@ -49,14 +53,17 @@ public:
     void location_changed(){request(false);}
     void display_changed(){request(true);}
     void refresh(bool force){
-        if(!panel_ || !IsWindow(panel_))return;
+        if(!valid_panel()){current_={};return;}
         if(!force && locate_(panel_)==current_.monitor)return;
         current_=query_(panel_);
         if(current_.precise)reset_retry();else schedule_retry();
-        PostMessage(panel_,changed_message,0,0);
+        // Identity-guarded observers belong to the settings thread: never post
+        // private messages to a host HWND that can be destroyed concurrently.
+        if(!identity_)PostMessage(panel_,changed_message,0,0);
         if(dialog_ && IsWindow(dialog_))PostMessage(dialog_,changed_message,0,0);
     }
 private:
+    bool valid_panel() const noexcept {return panel_ && IsWindow(panel_) && (!identity_ || GetProp(panel_,identity_property)==identity_);}
     void reset_retry() noexcept {
         if(receiver_)KillTimer(receiver_,2);
         retry_pending_=false;retry_attempt_=0;
@@ -68,6 +75,7 @@ private:
     }
     static HMONITOR locate_monitor(HWND window){return MonitorFromWindow(window,MONITOR_DEFAULTTONEAREST);}
     void request(bool force){
+        if(!valid_panel()){refresh(false);return;}
         if(!force && locate_(panel_)==current_.monitor)return;
         reset_retry();
         force_|=force;
@@ -79,9 +87,9 @@ private:
         if(event!=EVENT_OBJECT_LOCATIONCHANGE && event!=EVENT_OBJECT_SHOW && event!=EVENT_OBJECT_HIDE)return;
         if(object!=OBJID_WINDOW || child!=CHILDID_SELF || !window)return;
         for(auto* watcher=head_;watcher;watcher=watcher->next_){
-            if(watcher->hook_==hook && watcher->panel_ && (window==watcher->panel_ || IsChild(window,watcher->panel_))){
+            if(watcher->hook_==hook && watcher->valid_panel() && (window==watcher->panel_ || IsChild(window,watcher->panel_))){
                 if(event==EVENT_OBJECT_LOCATIONCHANGE){try{watcher->location_changed();}catch(...){}}
-                else PostMessage(watcher->panel_,visibility_message,0,0);
+                else if(!watcher->identity_)PostMessage(watcher->panel_,visibility_message,0,0);
                 return;
             }
         }
@@ -107,6 +115,7 @@ private:
     unsigned retry_attempt_=0;
     bool retry_pending_=false,polling_active_=false;
     MonitorRefresh current_;
+    HANDLE identity_=nullptr;
     Query query_;
     Locate locate_;
 };

@@ -1,3 +1,4 @@
+#define CSP_SAVE_TEST_DIAGNOSTICS
 #include "../src/spectrum.h"
 #include "../src/render.h"
 #include "../src/config.h"
@@ -18,6 +19,7 @@ void check_close(double a,double b,const char* name){check(std::abs(a-b)<1e-9,na
 #include "reservation_stress_tests.h"
 #include "settings_layout_tests.h"
 #include "fps_tests.h"
+#include "scanline_tests.h"
 #include "monitor_events_tests.h"
 #include "settings_options_tests.h"
 #include "d2d_tests.h"
@@ -25,6 +27,10 @@ void check_close(double a,double b,const char* name){check(std::abs(a-b)<1e-9,na
 #include "../src/installation_guard.h"
 int main(int argc,char** argv) {
  try {
+    if(argc>1 && std::string(argv[1])=="--save-stress"){
+        for(int i=0;i<500;++i){save_conflict_tests();if(i%25==0)std::cout<<"Save iteration "<<i<<std::endl;}
+        std::cout<<"PASS: 500 save-conflict iterations, "<<checks<<" checks; retries access="<<csp::preset_retry_access<<", sharing="<<csp::preset_retry_sharing<<", lock="<<csp::preset_retry_lock<<".\n";return 0;
+    }
     settings_options_tests();
     check(csp::legacy_components_absent([](const wchar_t*){return false;}),"clean installation accepts the unified DLL");
     for(const wchar_t* legacy:{L"foo_uie_channel_spectrum_x86.dll",L"foo_uie_channel_spectrum_x64.dll",L"foo_uie_channel_spectrum_arm64ec.dll"})
@@ -33,6 +39,7 @@ int main(int argc,char** argv) {
     d2d_tests();
     monitor_events_tests();
     fps_tests();
+    scanline_tests();
     settings_layout_tests();
     stability_tests();
     performance_tests();

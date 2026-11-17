@@ -4,7 +4,10 @@ inline void save_conflict_tests(){
     auto waitResult=[](const std::shared_ptr<csp::SaveResult>& result){
         auto until=GetTickCount64()+5000;
         while(result->status.load(std::memory_order_acquire)==csp::SaveStatus::running && GetTickCount64()<until)Sleep(1);
-        return result->status.load(std::memory_order_acquire);
+        const auto status=result->status.load(std::memory_order_acquire);
+        if(status==csp::SaveStatus::running)std::cerr<<"Save diagnostic: completion timed out after 5000 ms\n";
+        if(status==csp::SaveStatus::failed && std::string(result->error)!="injected write failure")std::cerr<<"Save diagnostic: "<<result->error<<"\n";
+        return status;
     };
     struct Gate {
         HANDLE entered=CreateEventW(nullptr,TRUE,FALSE,nullptr),release=CreateEventW(nullptr,TRUE,FALSE,nullptr);

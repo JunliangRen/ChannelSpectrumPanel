@@ -6,6 +6,13 @@
 #include <cstdint>
 #pragma comment(lib,"winmm.lib")
 namespace csp {
+// WM_TIMER is serviced by native interaction loops that can defer WM_APP.
+// Use unique IDs for both timer implementations, with lParam == 0 (never a
+// TIMERPROC pointer). Ordinary UI timers use the small IDs 1, 2 and 3.
+inline WPARAM next_refresh_token() noexcept {
+    static std::atomic<UINT_PTR> next{0x10000};
+    for(;;){const auto token=next.fetch_add(1);if(token>=0x10000)return token;}
+}
 inline uint32_t frame_clock_ms() noexcept {
     static const double ticks_per_ms=[] {LARGE_INTEGER f{};QueryPerformanceFrequency(&f);return double(f.QuadPart)/1000;}();
     LARGE_INTEGER now{};QueryPerformanceCounter(&now);
@@ -23,7 +30,7 @@ struct FrameDeadline {
 };
 class FrameTimer {
 public:
-    static constexpr UINT message=WM_APP+102;
+    static constexpr UINT message=WM_TIMER;
     FrameTimer()=default;
     FrameTimer(const FrameTimer&)=delete;
     FrameTimer& operator=(const FrameTimer&)=delete;
@@ -40,7 +47,7 @@ public:
     void stop() noexcept {
         if(timer_){timeKillEvent(timer_);timer_=0;}
         if(period_){timeEndPeriod(1);period_=false;}
-        ++generation_;pending_=false;
+        generation_=next_refresh_token();pending_=false;
     }
     bool consume(WPARAM token) noexcept {
         if(!timer_ || token!=generation_)return false;
@@ -49,6 +56,7 @@ public:
 private:
     static void CALLBACK callback(UINT,UINT,DWORD_PTR user,DWORD_PTR,DWORD_PTR) noexcept {
         auto* self=reinterpret_cast<FrameTimer*>(user);
+
         if(self->callback_busy_.test_and_set(std::memory_order_acquire))return;
         LARGE_INTEGER now{};
         if(QueryPerformanceCounter(&now) && self->deadline_.due(double(now.QuadPart)) && !self->pending_.exchange(true)){

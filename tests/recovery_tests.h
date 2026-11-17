@@ -1,4 +1,5 @@
 #pragma once
+#include <thread>
 #include "../src/preset_save.h"
 inline void recovery_tests(){
     int fallbackAttempts=0,monitorWarnings=0;
@@ -88,6 +89,18 @@ inline void recovery_tests(){
     FakeOps success{0};HANDLE file=reinterpret_cast<HANDLE>(1);
     csp::finish_preset_save(file,L"temp",L"target",bytes,success);
     check(success.replaced && file==INVALID_HANDLE_VALUE,"replacement occurs only after successful close");
+    for(DWORD error:{DWORD(ERROR_ACCESS_DENIED),DWORD(ERROR_SHARING_VIOLATION),DWORD(ERROR_LOCK_VIOLATION)}){
+        unsigned attempts=0,delays=0;
+        check(csp::retry_preset_replace([&]{if(++attempts<3){SetLastError(error);return false;}return true;},
+            [&](DWORD ms){check(ms==20,"replacement retry delay bounded");++delays;}),"transient replacement failure recovers");
+        check(attempts==3 && delays==2,"only failed attempts wait");
+        attempts=delays=0;
+        const bool result=csp::retry_preset_replace([&]{++attempts;SetLastError(error);return false;},[&](DWORD){++delays;});
+        check(!result && GetLastError()==error && attempts==16 && delays==15,"persistent replacement denial preserves final error and stops");
+    }
+    unsigned attempts=0,delays=0;
+    check(!csp::retry_preset_replace([&]{++attempts;SetLastError(ERROR_DISK_FULL);return false;},[&](DWORD){++delays;}) &&
+        GetLastError()==ERROR_DISK_FULL && attempts==1 && delays==0,"nontransient replacement error is not retried");
     // Real same-directory replacement; no dialogs or player windows.
     auto dir=std::filesystem::path("build")/("preset-io-"+std::to_string(GetCurrentProcessId()));
     check(CreateDirectoryW(dir.c_str(),nullptr)!=FALSE,"create isolated preset IO test directory");
@@ -103,6 +116,16 @@ inline void recovery_tests(){
     check(failed && read()==bytes,"failed replacement preserves original preset bytes");
     size_t count=0;for(const auto& entry:std::filesystem::directory_iterator(dir)){(void)entry;++count;}
     check(count==1,"failed save cleans up its temporary file");
-    csp::save_preset_atomic(target,replacement);check(read()==replacement,"existing preset replaced after successful write");
+    HANDLE transient=CreateFileW(target.c_str(),GENERIC_READ,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+    check(transient!=INVALID_HANDLE_VALUE,"temporary sharing blocker opens");
+    std::jthread unlock([transient]{Sleep(60);CloseHandle(transient);});
+    csp::save_preset_atomic(target,replacement);unlock.join();
+    check(read()==replacement,"replacement recovers when external sharing blocker closes");
+    check(SetFileAttributesW(target.c_str(),FILE_ATTRIBUTE_READONLY)!=FALSE,"set persistent read-only target");
+    failed=false;try{csp::save_preset_atomic(target,bytes);}catch(const std::runtime_error& e){failed=std::string(e.what()).find("Win32 error 5")!=std::string::npos;}
+    SetFileAttributesW(target.c_str(),FILE_ATTRIBUTE_NORMAL);
+    check(failed && read()==replacement,"persistent access denial reports exact error and preserves original");
+    size_t remaining=0;for(const auto& entry:std::filesystem::directory_iterator(dir)){(void)entry;++remaining;}
+    check(remaining==1,"persistent access denial removes temporary file");
     check(DeleteFileW(target.c_str()) && RemoveDirectoryW(dir.c_str()),"preset IO test cleans its files");
 }

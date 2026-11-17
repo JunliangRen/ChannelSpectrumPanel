@@ -1,4 +1,4 @@
-param([string]$MSBuild, [ValidateSet('all','x86','x64','arm64ec')][string]$Architecture = 'all')
+param([string]$MSBuild, [ValidateSet('all','x86','x64','arm64ec')][string]$Architecture = 'all', [switch]$SaveStress)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 if (!$MSBuild) {
@@ -28,10 +28,23 @@ try {
         if ($LASTEXITCODE) { throw "$arch SDK adapter test build failed." }
         & $MSBuild tests/spectrum_window_tests.vcxproj /m "/p:BuildTestRuntime=$(!$crossCompileArm)" /p:Configuration=Release "/p:Platform=$platform" /p:PreferredToolArchitecture=x64 /v:quiet /nologo
         if ($LASTEXITCODE) { throw "$arch real window test build failed." }
+        foreach ($project in 'scanline_dll_fixture','scanline_dll_tests') {
+            & $MSBuild "tests/$project.vcxproj" /m /p:Configuration=Release "/p:Platform=$platform" /v:quiet /nologo
+            if ($LASTEXITCODE) { throw "$arch $project build failed." }
+        }
         if ($crossCompileArm) {
             Write-Host 'ARM64EC plugin and tests compiled; runtime tests require Windows on ARM and were NOT run.'
             continue
         }
+        $unloadLog = Join-Path $root "build/$arch/scanline-dll-tests.log"
+        $unloadErrors = Join-Path $root "build/$arch/scanline-dll-tests.err"
+        $unloadTest = Start-Process -FilePath (Join-Path $root "build/$arch/tests/scanline_dll_tests.exe") -WorkingDirectory (Join-Path $root "build/$arch/tests") -WindowStyle Hidden -PassThru -RedirectStandardOutput $unloadLog -RedirectStandardError $unloadErrors
+        try {
+            if (!$unloadTest.WaitForExit(60000)) { $unloadTest.Kill(); $unloadTest.WaitForExit(); throw "$arch DLL tests timed out." }
+            Get-Content $unloadLog
+            if ((Get-Item $unloadErrors).Length) { Get-Content $unloadErrors }
+            if ($unloadTest.ExitCode -ne 0 -or !(Select-String -LiteralPath $unloadLog -Pattern '^PASS: .* actual DLL unload checks' -Quiet)) { throw "$arch DLL tests failed." }
+        } finally { $unloadTest.Dispose() }
         & "./build/$arch/tests/ui_adapter_tests.exe" | Tee-Object "build/$arch/ui-adapter-tests.log"
         if ($LASTEXITCODE) { throw "$arch SDK adapter tests failed." }
         $windowLog = Join-Path $root "build/$arch/spectrum-window-tests.log"
@@ -44,6 +57,10 @@ try {
             # Some SDK fatal paths terminate without a nonzero process exit code.
             if ($windowTest.ExitCode -ne 0 -or !(Select-String -LiteralPath $windowLog -Pattern '^PASS: .* real SpectrumWindow lifecycle checks' -Quiet)) { throw "$arch real window tests failed or exited before completion." }
         } finally { $windowTest.Dispose() }
+        if ($SaveStress) {
+            & "./build/$arch/tests/core_tests.exe" --save-stress | Tee-Object "build/$arch/save-stress.log"
+            if ($LASTEXITCODE) { throw "$arch extended save stress failed." }
+        }
         foreach ($style in 0,1,2) {
             & "./build/$arch/tests/core_tests.exe" "build/$arch/preview-$style.bmp" $style "build/$arch/oracle-differences.txt" | Tee-Object "build/$arch/tests-$style.log"
             if ($LASTEXITCODE) { throw "$arch style $style core tests failed." }
@@ -58,5 +75,5 @@ try {
         Write-Host 'x86/x64 synthetic previews match byte for byte.'
     }
     & "$PSScriptRoot/package.ps1" -Architecture $Architecture
-    if ($Architecture -eq 'all') { & "$PSScriptRoot/../tests/package_tests.ps1" }
+    if ($Architecture -eq 'all') { & "$PSScriptRoot/../tests/package_tests.ps1" -Package (Join-Path $root 'dist/foo_uie_channel_spectrum-1.3.1.fb2k-component') }
 } finally { Pop-Location }

@@ -70,6 +70,7 @@ inline void fps_tests(){
     Sleep(30);
     MSG duplicate{};check(!PeekMessage(&duplicate,window,csp::FrameTimer::message,csp::FrameTimer::message,PM_REMOVE),"pending update prevents queue backlog");
     const auto stale=message.wParam;
+    check(message.message==WM_TIMER && message.lParam==0 && stale>=0x10000,"modal-compatible timer ID never carries callback pointer");
     check(timer.consume(stale),"current timer message accepted");
     timer.stop();check(!timer.consume(stale),"stopped timer message ignored");
     check(timer.start(window,60),"timer can restart");

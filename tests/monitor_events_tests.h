@@ -84,4 +84,18 @@ inline void monitor_events_tests(){
     hooked.stop();const int stopped=queries;
     NotifyWinEvent(EVENT_OBJECT_LOCATIONCHANGE,other,OBJID_WINDOW,CHILDID_SELF);pump();
     check(queries==stopped,"unregistered hook cannot query destroyed listener state");
+    const HANDLE identity=reinterpret_cast<HANDLE>(11);
+    check(SetProp(child,csp::MonitorEvents::identity_property,identity)!=FALSE,"monitor target lifetime marker installed");
+    MSG leftover{};while(PeekMessage(&leftover,child,csp::MonitorEvents::changed_message,csp::MonitorEvents::changed_message,PM_REMOVE)){}
+    csp::MonitorEvents guarded(identity,query,locate);guarded.bind(child,true);
+    check(!PeekMessage(&leftover,child,csp::MonitorEvents::changed_message,csp::MonitorEvents::changed_message,PM_REMOVE),"settings observer never posts private refresh messages to host target");
+    const int validQueries=queries;
+    check(guarded.has_receiver() && guarded.current().hz==rate,"guarded listener queries matching panel lifetime");
+    RemoveProp(child,csp::MonitorEvents::identity_property);guarded.refresh(true);guarded.display_changed();pump();
+    check(queries==validQueries && guarded.current().hz==0,"removed lifetime marker blocks queries and clears stale monitor data");
+    SetProp(child,csp::MonitorEvents::identity_property,reinterpret_cast<HANDLE>(12));
+    guarded.refresh(true);guarded.location_changed();pump();
+    check(queries==validQueries && !guarded.bind(child,true),"reused target HWND with different marker cannot be monitored");
+    guarded.stop();RemoveProp(child,csp::MonitorEvents::identity_property);
+
 }
