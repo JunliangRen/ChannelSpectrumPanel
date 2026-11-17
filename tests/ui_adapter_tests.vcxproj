@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+ <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Release|ARM64EC"><Configuration>Release</Configuration><Platform>ARM64EC</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration></ItemGroup>
+ <PropertyGroup Label="Globals"><ProjectGuid>{874FE194-DC60-48D3-B911-106E29FA30F4}</ProjectGuid><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+ <PropertyGroup Label="Configuration"><ConfigurationType>Application</ConfigurationType><PlatformToolset>v143</PlatformToolset><CharacterSet>Unicode</CharacterSet></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+ <Import Condition="'$(Platform)'!='ARM64EC'" Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+ <PropertyGroup><BuildTestRuntime Condition="'$(BuildTestRuntime)'==''">true</BuildTestRuntime><CspArch Condition="'$(Platform)'=='Win32'">x86</CspArch><CspArch Condition="'$(Platform)'=='x64'">x64</CspArch><CspArch Condition="'$(Platform)'=='ARM64EC'">arm64ec</CspArch><OutDir>$(ProjectDir)..\build\$(CspArch)\tests\</OutDir><IntDir>$(ProjectDir)..\build\$(CspArch)\adapter-tests\</IntDir><TargetName>ui_adapter_tests</TargetName></PropertyGroup>
+ <ItemDefinitionGroup><MASM Condition="'$(Platform)'=='Win32'"><UseSafeExceptionHandlers>true</UseSafeExceptionHandlers></MASM>
+  <ClCompile><WarningLevel>Level4</WarningLevel><Optimization>MaxSpeed</Optimization><LanguageStandard>stdcpp20</LanguageStandard><RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary><ExceptionHandling>Sync</ExceptionHandling><PrecompiledHeader>NotUsing</PrecompiledHeader><AdditionalIncludeDirectories>$(ProjectDir)..\vendor;$(ProjectDir)..\vendor\foobar2000;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories><PreprocessorDefinitions>WIN32;_WINDOWS;_WINDLL;NDEBUG;UNICODE;_UNICODE;NOMINMAX;CUI_SDK_DWRITE_ENABLED=0;%(PreprocessorDefinitions)</PreprocessorDefinitions><AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions><DebugInformationFormat>ProgramDatabase</DebugInformationFormat></ClCompile>
+  <Link><SubSystem>Console</SubSystem><GenerateDebugInformation>true</GenerateDebugInformation><AdditionalDependencies>$(ProjectDir)..\vendor\foobar2000\shared\shared-$(Platform).lib;msimg32.lib;user32.lib;gdi32.lib;shlwapi.lib;ole32.lib;comdlg32.lib;dxguid.lib;winmm.lib;uxtheme.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
+ </ItemDefinitionGroup>
+ <ItemGroup><ClCompile Include="ui_adapter_tests.cpp" /><ClCompile Include="..\vendor\columns_ui-sdk\ui_extension.cpp" /></ItemGroup>
+ <ItemGroup>
+  <ProjectReference Include="sdk_shared.vcxproj" Condition="'$(BuildTestRuntime)'=='true'"><Project>{6E4064BE-B404-43C9-A24D-D921ACF54DA4}</Project><LinkLibraryDependencies>false</LinkLibraryDependencies></ProjectReference>
+  <ProjectReference Include="..\vendor\pfc\pfc.vcxproj"><Project>{EBFFFB4E-261D-44D3-B89C-957B31A0BF9C}</Project></ProjectReference>
+  <ProjectReference Include="..\vendor\foobar2000\SDK\foobar2000_SDK.vcxproj"><Project>{E8091321-D79D-4575-86EF-064EA1A4A20D}</Project></ProjectReference>
+  <ProjectReference Include="..\vendor\foobar2000\foobar2000_component_client\foobar2000_component_client.vcxproj"><Project>{71AD2674-065B-48F5-B8B0-E1F9D3892081}</Project></ProjectReference>
+ </ItemGroup>
+ <ItemGroup><MASM Include="..\src\mapping_x87.asm" Condition="'$(Platform)'=='x64'" /></ItemGroup>
+ <ItemGroup><MASM Include="..\src\mapping_x87_x86.asm" Condition="'$(Platform)'=='Win32'" /></ItemGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+ <Import Condition="'$(Platform)'!='ARM64EC'" Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+</Project>

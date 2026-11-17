@@ -1,10 +1,10 @@
 # Channel Spectrum Panel
 
-A spectrum visualization panel for foobar2000 and Columns UI, with separate audio channels, mirrored frequency layouts and falling peak markers. Available for x86, x64 and ARM64EC, with English, Simplified Chinese and Japanese settings.
+A spectrum visualization panel for foobar2000 Default UI and Columns UI, with separate audio channels, mirrored frequency layouts and falling peak markers. Available for x86, x64 and ARM64EC, with English, Simplified Chinese and Japanese settings.
 
 ## Requirements
 
-- foobar2000 **2.0 or later**, with Columns UI for the same architecture.
+- foobar2000 **2.0 or later**, using Default UI or Columns UI. Columns UI is optional; when used, it must match the player architecture.
 - The ARM64EC build requires **Windows 11 on ARM** and the ARM edition of foobar2000.
 
 ## Original component
@@ -18,7 +18,7 @@ This is an independently written reconstruction, not an official update or recov
 
 ## Building
 
-Requires Visual Studio C++ v143 tools (including MASM and ARM64/ARM64EC tools), Windows SDK, PowerShell, Git and 7-Zip.
+Requires Visual Studio C++ v143 tools (including ATL for the native SDK test harness, MASM and ARM64/ARM64EC tools), Windows SDK, PowerShell, Git and 7-Zip.
 
 ```powershell
 .\scripts\setup-deps.ps1

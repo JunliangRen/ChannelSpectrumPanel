@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+ <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Release|ARM64EC"><Configuration>Release</Configuration><Platform>ARM64EC</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration></ItemGroup>
+ <PropertyGroup Label="Globals"><ProjectGuid>{6E4064BE-B404-43C9-A24D-D921ACF54DA4}</ProjectGuid><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+ <PropertyGroup Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><PlatformToolset>v143</PlatformToolset><CharacterSet>Unicode</CharacterSet></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+ <Import Condition="'$(Platform)'!='ARM64EC'" Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+ <PropertyGroup><CspArch Condition="'$(Platform)'=='Win32'">x86</CspArch><CspArch Condition="'$(Platform)'=='x64'">x64</CspArch><CspArch Condition="'$(Platform)'=='ARM64EC'">arm64ec</CspArch><OutDir>$(ProjectDir)..\build\$(CspArch)\tests\</OutDir><IntDir>$(ProjectDir)..\build\$(CspArch)\sdk-shared\</IntDir><TargetName>shared</TargetName></PropertyGroup>
+ <ItemDefinitionGroup><MASM Condition="'$(Platform)'=='Win32'"><UseSafeExceptionHandlers>true</UseSafeExceptionHandlers></MASM>
+  <ClCompile><WarningLevel>Level4</WarningLevel><Optimization>MaxSpeed</Optimization><LanguageStandard>stdcpp20</LanguageStandard><RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary><ExceptionHandling>Sync</ExceptionHandling><PrecompiledHeader>NotUsing</PrecompiledHeader><AdditionalIncludeDirectories>$(ProjectDir)..\vendor;$(ProjectDir)..\vendor\foobar2000;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories><PreprocessorDefinitions>WIN32;_WINDOWS;_WINDLL;NDEBUG;UNICODE;_UNICODE;NOMINMAX;CUI_SDK_DWRITE_ENABLED=0;SHARED_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions><AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions><DebugInformationFormat>ProgramDatabase</DebugInformationFormat></ClCompile>
+  <Link><SubSystem>Console</SubSystem><GenerateDebugInformation>true</GenerateDebugInformation><AdditionalDependencies>comctl32.lib;imagehlp.lib;dbghelp.lib;msimg32.lib;user32.lib;gdi32.lib;shlwapi.lib;ole32.lib;comdlg32.lib;dxguid.lib;winmm.lib;uxtheme.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
+ </ItemDefinitionGroup>
+ <ItemGroup>
+  <ClCompile Include="..\vendor\foobar2000\shared\audio_math.cpp" />
+  <ClCompile Include="..\vendor\foobar2000\shared\crash_info.cpp" />
+  <ClCompile Include="..\vendor\foobar2000\shared\filedialogs.cpp" />
+  <ClCompile Include="..\vendor\foobar2000\shared\filedialogs_vista.cpp" />
+  <ClCompile Include="..\vendor\foobar2000\shared\font_description.cpp" />
+  <ClCompile Include="..\vendor\foobar2000\shared\minidump.cpp" />
+  <ClCompile Include="..\vendor\foobar2000\shared\modal_dialog.cpp" />
+  <ClCompile Include="..\vendor\foobar2000\shared\systray.cpp" />
+  <ClCompile Include="..\vendor\foobar2000\shared\text_drawing.cpp" />
+  <ClCompile Include="..\vendor\foobar2000\shared\utf8.cpp" />
+  <ClCompile Include="..\vendor\foobar2000\shared\utf8api.cpp" />
+  <ClCompile Include="..\vendor\foobar2000\shared\Utility.cpp" />
+ </ItemGroup>
+ <ItemGroup><ProjectReference Include="..\vendor\pfc\pfc.vcxproj"><Project>{EBFFFB4E-261D-44D3-B89C-957B31A0BF9C}</Project></ProjectReference></ItemGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+ <Import Condition="'$(Platform)'!='ARM64EC'" Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+</Project>

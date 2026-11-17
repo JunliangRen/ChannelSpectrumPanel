@@ -22,10 +22,28 @@ try {
         if ($LASTEXITCODE) { throw "$arch plugin build failed." }
         & $MSBuild tests/core_tests.vcxproj /m /p:Configuration=Release "/p:Platform=$platform" /p:PreferredToolArchitecture=x64 /v:quiet /nologo
         if ($LASTEXITCODE) { throw "$arch test build failed." }
-        if ($arch -eq 'arm64ec' -and [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne 'Arm64') {
+        $crossCompileArm = $arch -eq 'arm64ec' -and [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne 'Arm64'
+        # Only executing the standalone harness needs the SDK shared runtime DLL.
+        & $MSBuild tests/ui_adapter_tests.vcxproj /m "/p:BuildTestRuntime=$(!$crossCompileArm)" /p:Configuration=Release "/p:Platform=$platform" /p:PreferredToolArchitecture=x64 /v:quiet /nologo
+        if ($LASTEXITCODE) { throw "$arch SDK adapter test build failed." }
+        & $MSBuild tests/spectrum_window_tests.vcxproj /m "/p:BuildTestRuntime=$(!$crossCompileArm)" /p:Configuration=Release "/p:Platform=$platform" /p:PreferredToolArchitecture=x64 /v:quiet /nologo
+        if ($LASTEXITCODE) { throw "$arch real window test build failed." }
+        if ($crossCompileArm) {
             Write-Host 'ARM64EC plugin and tests compiled; runtime tests require Windows on ARM and were NOT run.'
             continue
         }
+        & "./build/$arch/tests/ui_adapter_tests.exe" | Tee-Object "build/$arch/ui-adapter-tests.log"
+        if ($LASTEXITCODE) { throw "$arch SDK adapter tests failed." }
+        $windowLog = Join-Path $root "build/$arch/spectrum-window-tests.log"
+        $windowErrors = Join-Path $root "build/$arch/spectrum-window-tests.err"
+        $windowTest = Start-Process -FilePath (Join-Path $root "build/$arch/tests/spectrum_window_tests.exe") -WorkingDirectory $root -WindowStyle Hidden -PassThru -RedirectStandardOutput $windowLog -RedirectStandardError $windowErrors
+        try {
+            if (!$windowTest.WaitForExit(60000)) { $windowTest.Kill(); $windowTest.WaitForExit(); throw "$arch real window tests timed out." }
+            Get-Content $windowLog
+            if ((Get-Item $windowErrors).Length) { Get-Content $windowErrors }
+            # Some SDK fatal paths terminate without a nonzero process exit code.
+            if ($windowTest.ExitCode -ne 0 -or !(Select-String -LiteralPath $windowLog -Pattern '^PASS: .* real SpectrumWindow lifecycle checks' -Quiet)) { throw "$arch real window tests failed or exited before completion." }
+        } finally { $windowTest.Dispose() }
         foreach ($style in 0,1,2) {
             & "./build/$arch/tests/core_tests.exe" "build/$arch/preview-$style.bmp" $style "build/$arch/oracle-differences.txt" | Tee-Object "build/$arch/tests-$style.log"
             if ($LASTEXITCODE) { throw "$arch style $style core tests failed." }

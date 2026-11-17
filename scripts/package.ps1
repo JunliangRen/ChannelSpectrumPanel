@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
 $root = Split-Path $PSScriptRoot -Parent
 $suffix = if ($Architecture -eq 'all') { '' } else { "_$Architecture" }
-$out = Join-Path $root "dist\foo_uie_channel_spectrum$suffix-1.2.1.fb2k-component"
+$out = Join-Path $root "dist\foo_uie_channel_spectrum$suffix-1.3.fb2k-component"
 $files = @{
     'README.md' = (Join-Path $root 'README.md')
     'THIRD-PARTY-NOTICES.txt' = (Join-Path $root 'THIRD-PARTY-NOTICES.txt')
