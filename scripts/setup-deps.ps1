@@ -12,6 +12,16 @@ if (!(Test-Path -LiteralPath (Join-Path $vendor 'foobar2000\SDK\foobar2000.h')))
     & $SevenZip x $archive "-o$vendor" -y
     if ($LASTEXITCODE) { throw 'SDK extraction failed.' }
 }
+# The pinned SDK ships v143 projects. Build its static libraries with the
+# plugin's toolset as well, including when the SDK was extracted previously.
+foreach ($project in 'pfc/pfc.vcxproj', 'foobar2000/SDK/foobar2000_SDK.vcxproj', 'foobar2000/foobar2000_component_client/foobar2000_component_client.vcxproj') {
+    $path = Join-Path $vendor $project
+    $text = [IO.File]::ReadAllText($path)
+    $updated = $text.Replace('<PlatformToolset>v143</PlatformToolset>', '<PlatformToolset>v145</PlatformToolset>')
+    if ($updated -cne $text) {
+        [IO.File]::WriteAllText($path, $updated, [Text.UTF8Encoding]::new($true))
+    }
+}
 $cui = Join-Path $vendor 'columns_ui-sdk'
 $revision = 'e33a58aece664dc2f02342289f25211af5e7576c'
 if (!(Test-Path -LiteralPath $cui)) {

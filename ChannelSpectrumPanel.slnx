@@ -1,0 +1,24 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Release" />
+    <Platform Name="x86" />
+    <Platform Name="x64" />
+    <Platform Name="ARM64EC" />
+  </Configurations>
+  <Project Path="foo_uie_channel_spectrum_x64.vcxproj" Id="e58108cf-c4a3-42ef-b3f6-cafa84b1a5e3" />
+  <Folder Name="/Tests/">
+    <Project Path="tests/core_tests.vcxproj" Id="6c10bf21-49a6-44b5-a0cc-f35b10ee8b04" />
+    <Project Path="tests/scanline_dll_fixture.vcxproj" Id="2d88fe74-c85f-49f6-92aa-37fd3689f215" />
+    <Project Path="tests/scanline_dll_tests.vcxproj" Id="e66a4325-6435-4d43-a9cf-8e9f2a6532af">
+      <BuildDependency Project="tests/scanline_dll_fixture.vcxproj" />
+    </Project>
+    <Project Path="tests/sdk_shared.vcxproj" Id="6e4064be-b404-43c9-a24d-d921acf54da4" />
+    <Project Path="tests/spectrum_window_tests.vcxproj" Id="75c06a22-8506-454d-a4b0-2e164932f6c1" />
+    <Project Path="tests/ui_adapter_tests.vcxproj" Id="874fe194-dc60-48d3-b911-106e29fa30f4" />
+  </Folder>
+  <Folder Name="/SDK/">
+    <Project Path="vendor/pfc/pfc.vcxproj" Id="ebfffb4e-261d-44d3-b89c-957b31a0bf9c" />
+    <Project Path="vendor/foobar2000/SDK/foobar2000_SDK.vcxproj" Id="e8091321-d79d-4575-86ef-064ea1a4a20d" />
+    <Project Path="vendor/foobar2000/foobar2000_component_client/foobar2000_component_client.vcxproj" Id="71ad2674-065b-48f5-b8b0-e1f9d3892081" />
+  </Folder>
+</Solution>

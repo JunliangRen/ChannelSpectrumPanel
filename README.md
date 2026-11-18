@@ -18,7 +18,7 @@ This is an independently written reconstruction, not an official update or recov
 
 ## Building
 
-Requires Visual Studio C++ v143 tools (including ATL for the native SDK test harness, MASM and ARM64/ARM64EC tools), Windows SDK, PowerShell, Git and 7-Zip.
+Requires Visual Studio 2026 C++ v145 tools for x86, x64 and ARM64EC, including MASM and the matching ATL libraries for the native SDK test harness, Windows SDK, PowerShell, Git and 7-Zip.
 
 ```powershell
 .\scripts\setup-deps.ps1

@@ -61,7 +61,7 @@ public:
             auto job=std::make_unique<Job>();if(!job->slot.acquired)return false;
             auto state=std::make_shared<State>();if(!state->wake)return false;
             state->factory=factory_;job->state=state;
-            // The v143 UCRT pins the entry-point module before starting the
+            // The MSVC UCRT pins the entry-point module before starting the
             // thread and releases it after CRT cleanup on normal return.
             auto* context=job.release();
             const auto thread=launch_(nullptr,0,worker,context,0,nullptr);

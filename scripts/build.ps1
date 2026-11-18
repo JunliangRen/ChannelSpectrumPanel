@@ -5,7 +5,7 @@ if (!$MSBuild) {
     $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
     $MSBuild = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
 }
-if (!$MSBuild -or !(Test-Path -LiteralPath $MSBuild)) { throw 'MSBuild not found. Install Visual Studio C++ tools with v143 (x86/x64 and ARM64/ARM64EC), or pass -MSBuild.' }
+if (!$MSBuild -or !(Test-Path -LiteralPath $MSBuild)) { throw 'MSBuild not found. Install Visual Studio C++ tools with v145 (x86/x64 and ARM64/ARM64EC), or pass -MSBuild.' }
 Push-Location $root
 try {
     $architectures = if ($Architecture -eq 'all') { @('x86','x64','arm64ec') } else { @($Architecture) }
@@ -14,7 +14,7 @@ try {
         if ($arch -eq 'arm64ec') {
             $armTools = ((& $MSBuild foo_uie_channel_spectrum_x64.vcxproj /p:Configuration=Release /p:Platform=ARM64EC -getProperty:VCToolsInstallDir /nologo) -join '').Trim()
             if (!$armTools -or !(Test-Path -LiteralPath (Join-Path $armTools 'bin/Hostx64/arm64/cl.exe'))) {
-                throw 'ARM64EC tools are missing. Install Visual Studio v143 ARM64/ARM64EC build tools, then rerun. No ARM package was produced.'
+                throw 'ARM64EC tools are missing. Install Visual Studio v145 ARM64/ARM64EC build tools, then rerun. No ARM package was produced.'
             }
         }
         New-Item -ItemType Directory -Force "build/$arch","dist/$arch" | Out-Null

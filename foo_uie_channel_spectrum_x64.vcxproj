@@ -3,7 +3,7 @@
  <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Release|ARM64EC"><Configuration>Release</Configuration><Platform>ARM64EC</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration></ItemGroup>
  <PropertyGroup Label="Globals"><ProjectGuid>{E58108CF-C4A3-42EF-B3F6-CAFA84B1A5E3}</ProjectGuid><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
- <PropertyGroup Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><PlatformToolset>v143</PlatformToolset><CharacterSet>Unicode</CharacterSet></PropertyGroup>
+ <PropertyGroup Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><PlatformToolset>v145</PlatformToolset><CharacterSet>Unicode</CharacterSet></PropertyGroup>
  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
  <Import Condition="'$(Platform)'!='ARM64EC'" Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
  <PropertyGroup><CspArch Condition="'$(Platform)'=='Win32'">x86</CspArch><CspArch Condition="'$(Platform)'=='x64'">x64</CspArch><CspArch Condition="'$(Platform)'=='ARM64EC'">arm64ec</CspArch><OutDir>$(MSBuildThisFileDirectory)dist\$(CspArch)\</OutDir><IntDir>$(MSBuildThisFileDirectory)build\$(CspArch)\plugin\</IntDir><TargetName>foo_uie_channel_spectrum</TargetName></PropertyGroup>

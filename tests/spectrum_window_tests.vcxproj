@@ -3,7 +3,7 @@
  <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Release|ARM64EC"><Configuration>Release</Configuration><Platform>ARM64EC</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration></ItemGroup>
  <PropertyGroup Label="Globals"><ProjectGuid>{75C06A22-8506-454D-A4B0-2E164932F6C1}</ProjectGuid><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
- <PropertyGroup Label="Configuration"><ConfigurationType>Application</ConfigurationType><PlatformToolset>v143</PlatformToolset><CharacterSet>Unicode</CharacterSet></PropertyGroup>
+ <PropertyGroup Label="Configuration"><ConfigurationType>Application</ConfigurationType><PlatformToolset>v145</PlatformToolset><CharacterSet>Unicode</CharacterSet></PropertyGroup>
  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
  <Import Condition="'$(Platform)'!='ARM64EC'" Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
  <PropertyGroup><BuildTestRuntime Condition="'$(BuildTestRuntime)'==''">true</BuildTestRuntime><CspArch Condition="'$(Platform)'=='Win32'">x86</CspArch><CspArch Condition="'$(Platform)'=='x64'">x64</CspArch><CspArch Condition="'$(Platform)'=='ARM64EC'">arm64ec</CspArch><OutDir>$(ProjectDir)..\build\$(CspArch)\tests\</OutDir><IntDir>$(ProjectDir)..\build\$(CspArch)\window-tests\</IntDir><TargetName>spectrum_window_tests</TargetName></PropertyGroup>

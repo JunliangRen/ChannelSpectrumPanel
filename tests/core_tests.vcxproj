@@ -3,7 +3,7 @@
  <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Release|ARM64EC"><Configuration>Release</Configuration><Platform>ARM64EC</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration></ItemGroup>
  <PropertyGroup Label="Globals"><ProjectGuid>{6C10BF21-49A6-44B5-A0CC-F35B10EE8B04}</ProjectGuid><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
- <PropertyGroup Label="Configuration"><ConfigurationType>Application</ConfigurationType><PlatformToolset>v143</PlatformToolset><CharacterSet>Unicode</CharacterSet></PropertyGroup>
+ <PropertyGroup Label="Configuration"><ConfigurationType>Application</ConfigurationType><PlatformToolset>v145</PlatformToolset><CharacterSet>Unicode</CharacterSet></PropertyGroup>
  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
  <Import Condition="'$(Platform)'!='ARM64EC'" Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
  <PropertyGroup><CspArch Condition="'$(Platform)'=='Win32'">x86</CspArch><CspArch Condition="'$(Platform)'=='x64'">x64</CspArch><CspArch Condition="'$(Platform)'=='ARM64EC'">arm64ec</CspArch><CspArch Condition="'$(CspPortableMapping)'=='true'">$(CspArch)-portable</CspArch><CspMappingDefine Condition="'$(CspPortableMapping)'=='true'">CSP_PORTABLE_MAPPING</CspMappingDefine><OutDir>$(ProjectDir)..\build\$(CspArch)\tests\</OutDir><IntDir>$(ProjectDir)..\build\$(CspArch)\tests\obj\</IntDir></PropertyGroup>
