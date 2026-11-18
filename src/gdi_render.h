@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <stdexcept>
 #include "spectrum.h"
+#include "rendered_fps.h"
 namespace csp {
 // EndPaint must run even if allocation or rendering throws.
 class PaintSession {
@@ -13,6 +14,32 @@ private:
     HWND window_;PAINTSTRUCT paint_{};
 public:
     HDC dc;
+};
+class GdiFpsOverlay {
+public:
+    GdiFpsOverlay()=default;
+    GdiFpsOverlay(const GdiFpsOverlay&)=delete;
+    GdiFpsOverlay& operator=(const GdiFpsOverlay&)=delete;
+    ~GdiFpsOverlay(){reset();}
+    void reset() noexcept {
+        if(font_ && font_!=GetStockObject(DEFAULT_GUI_FONT))DeleteObject(font_);
+        font_=nullptr;
+    }
+    void draw(HDC dc,int w,int h,const wchar_t* label){
+        if(!fps_fits(w,h) || !SaveDC(dc))return;
+        RECT box{w-fps_box_width,2,w-2,2+fps_box_height};
+        if(!font_){
+            font_=CreateFontW(-fps_font_pixels,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,
+                DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH,L"Segoe UI");
+            if(!font_)font_=static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+        }
+        SelectObject(dc,font_);
+        SetBkColor(dc,RGB(32,32,32));SetTextColor(dc,RGB(255,255,255));
+        SetTextAlign(dc,TA_RIGHT|TA_TOP);
+        ExtTextOutW(dc,box.right-3,box.top+1,ETO_CLIPPED|ETO_OPAQUE,&box,label,UINT(wcslen(label)),nullptr);
+        RestoreDC(dc,-1);
+    }
+private:HFONT font_=nullptr;
 };
 class SelectedPen {
 public:

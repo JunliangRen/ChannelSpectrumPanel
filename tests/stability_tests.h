@@ -6,6 +6,10 @@ inline void stability_tests(){
     csp::Engine engine,fresh;
     std::vector<double> loud(1024*2,1),silence(1024*2,0);
     engine.update(loud,1024,2,0,1,160,80,0,s);
+    engine.update(silence,1024,2,0,1,320,160,1,s);
+    check(std::any_of(engine.bars().begin(),engine.bars().end(),[](const auto& bar){return bar.peak<bar.top;}),"held peaks survive fullscreen resize during silence");
+    engine.update(silence,1024,2,0,1,160,80,2,s);
+    check(std::any_of(engine.bars().begin(),engine.bars().end(),[](const auto& bar){return bar.peak<bar.top;}),"held peaks survive return to panel size");
     engine.update({},1024,2,0,1,160,80,1,s);
     check(engine.bars().empty(),"invalid frame clears visible output");
     engine.update(silence,1024,2,0,1,160,80,2,s);

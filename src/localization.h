@@ -17,6 +17,12 @@ inline void set_ui_language(HWND window,unsigned language){
 }
 struct Translation {const wchar_t* en;const wchar_t* zh;const wchar_t* ja;};
 inline constexpr Translation translations[]={
+    {L"Configure...",L"设置…",L"設定…"},
+    {L"Color Mode",L"颜色模式",L"カラーモード"},
+    {L"Simple-line",L"简单线条",L"折れ線"},
+    {L"Show FPS",L"显示 FPS",L"FPS を表示"},
+    {L"Fullscreen",L"全屏",L"全画面"},
+    {L"Exit fullscreen",L"退出全屏",L"全画面を終了"},
     {L"Foreground palette",L"前景调色板",L"前景パレット"},
     {L"Background palette",L"背景调色板",L"背景パレット"},
     {L"Mode and layout",L"模式与布局",L"モードと配置"},

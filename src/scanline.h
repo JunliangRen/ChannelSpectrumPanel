@@ -148,18 +148,19 @@ public:
         timer_=timeSetEvent(2,1,callback,reinterpret_cast<DWORD_PTR>(this),TIME_PERIODIC|TIME_CALLBACK_FUNCTION|TIME_KILL_SYNCHRONOUS);
         if(!timer_){pause();return false;}return true;
     }
-    bool ready(WPARAM generation,double interval){
+    bool ready(WPARAM generation,double interval,HWND output=nullptr){
         if(!timer_ || generation!=generation_ || !initialized_)return false;
         pending_=false;LARGE_INTEGER stamp{};QueryPerformanceCounter(&stamp);const double now=double(stamp.QuadPart);
         const double period=frequency_*interval/1000;
         if(deadline_.period!=period)deadline_.reset(last_,period);
         DWORD scan=0;auto result=device_.scanline(scan);
         if(now<deadline_.next)return false;const double elapsed=(now-last_)*1000/frequency_;
-        RECT rect{};GetWindowRect(window_,&rect);MONITORINFO monitor{sizeof(monitor)};
-        GetMonitorInfo(MonitorFromWindow(window_,MONITOR_DEFAULTTONEAREST),&monitor);
+        if(!output)output=window_;
+        RECT rect{};GetWindowRect(output,&rect);MONITORINFO monitor{sizeof(monitor)};
+        GetMonitorInfo(MonitorFromWindow(output,MONITOR_DEFAULTTONEAREST),&monitor);
         int top=rect.top-monitor.rcMonitor.top-100,bottom=rect.bottom-monitor.rcMonitor.top;
         // Time-bounded fallback if a driver/monitor cannot supply a useful safe region.
-        if((monitor.dwFlags&MONITORINFOF_PRIMARY) && SUCCEEDED(result) && int(scan)>=top && int(scan)<=bottom && elapsed<2*interval)return false;
+        if(!(rect.top<=monitor.rcMonitor.top && rect.bottom>=monitor.rcMonitor.bottom) && (monitor.dwFlags&MONITORINFOF_PRIMARY) && SUCCEEDED(result) && int(scan)>=top && int(scan)<=bottom && elapsed<2*interval)return false;
         last_=now;deadline_.due(now);return true;
     }
 private:

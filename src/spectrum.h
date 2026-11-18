@@ -253,6 +253,8 @@ public:
 
 private:
     void build(int width,int height,unsigned bins,const Settings& s) {
+        const int previousHeight=height_;
+        const bool resizeOnly=previousHeight>0 && bins==bins_ && s==settings_;
         width_=width; height_=height; bins_=bins; settings_=s;
         const int pitch=int(s.pitch());
         const int usable=width-int(s.padding_left)-int(s.padding_right)-int(displays_-1)*int(s.channel_gap);
@@ -260,7 +262,8 @@ private:
         extent_=extent;shift_=std::max(0,(usable-int(displays_)*extent)/2);
         peaks_.resize(displays_);descriptors_.resize(displays_);
         for(unsigned side=0;side<displays_;++side){
-            peaks_[side].assign(bins,{});
+            if(!resizeOnly)peaks_[side].assign(bins,{});
+            else if(previousHeight!=height)for(auto& peak:peaks_[side])peak.position=int64_t(double(peak.position)*height/previousHeight);
             const bool increasing=frequency_increasing(side,displays_,s);
             const int spacing=s.style==Style::SimpleLine?0:int(s.pitch()-s.effective_width());
             descriptors_[side]=frequency_descriptors(extent,bins,pitch,spacing,increasing,s.linear_frequency,height,side>0);

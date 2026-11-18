@@ -2,7 +2,7 @@
 #include "installation_guard.h"
 #include "ui_adapters.h"
 
-DECLARE_COMPONENT_VERSION("Channel Spectrum Panel", "1.3.1",
+DECLARE_COMPONENT_VERSION("Channel Spectrum Panel", "1.4",
     "Default UI and Columns UI spectrum for x86, x64 and ARM64EC. Independent reconstruction inspired by Channel Spectrum panel 0.17.2.\n"
     "Mirrored channels, original amplitude curves and fixed-point falling peaks. English, Simplified Chinese and Japanese settings.");
 class InstallationValidator : public component_installation_validator {

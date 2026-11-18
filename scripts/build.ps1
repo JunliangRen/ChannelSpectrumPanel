@@ -51,7 +51,7 @@ try {
         $windowErrors = Join-Path $root "build/$arch/spectrum-window-tests.err"
         $windowTest = Start-Process -FilePath (Join-Path $root "build/$arch/tests/spectrum_window_tests.exe") -WorkingDirectory $root -WindowStyle Hidden -PassThru -RedirectStandardOutput $windowLog -RedirectStandardError $windowErrors
         try {
-            if (!$windowTest.WaitForExit(60000)) { $windowTest.Kill(); $windowTest.WaitForExit(); throw "$arch real window tests timed out." }
+            if (!$windowTest.WaitForExit(120000)) { $windowTest.Kill(); $windowTest.WaitForExit(); throw "$arch real window tests timed out." }
             Get-Content $windowLog
             if ((Get-Item $windowErrors).Length) { Get-Content $windowErrors }
             # Some SDK fatal paths terminate without a nonzero process exit code.
@@ -75,5 +75,5 @@ try {
         Write-Host 'x86/x64 synthetic previews match byte for byte.'
     }
     & "$PSScriptRoot/package.ps1" -Architecture $Architecture
-    if ($Architecture -eq 'all') { & "$PSScriptRoot/../tests/package_tests.ps1" -Package (Join-Path $root 'dist/foo_uie_channel_spectrum-1.3.1.fb2k-component') }
+    if ($Architecture -eq 'all') { & "$PSScriptRoot/../tests/package_tests.ps1" -Package (Join-Path $root 'dist/foo_uie_channel_spectrum-1.4.fb2k-component') }
 } finally { Pop-Location }

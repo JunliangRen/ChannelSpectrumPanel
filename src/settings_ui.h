@@ -15,7 +15,7 @@
 #include "settings_controls.h"
 #include "monitor_events.h"
 namespace {
-struct DialogState { csp::Settings value; std::function<void(const csp::Settings&)> apply; bool changed=false; std::shared_ptr<csp::MonitorEvents> monitor_events; bool monitor_fallback=false; COLORREF custom_colors[16]{}; std::shared_ptr<csp::SaveResult> save; csp::SettingsHeadingFont heading_font; unsigned language=0; std::function<void(unsigned)> save_language; std::function<void(HWND)> initialized; };
+struct DialogState { csp::Settings value; std::function<void(const csp::Settings&)> apply; bool changed=false; std::shared_ptr<csp::MonitorEvents> monitor_events; bool monitor_fallback=false; COLORREF custom_colors[16]{}; std::shared_ptr<csp::SaveResult> save; csp::SettingsHeadingFont heading_font; unsigned language=0; std::function<void(unsigned)> save_language; std::function<void(HWND)> initialized; std::function<void(HWND)> closing; };
 void combo(HWND w,int id,std::initializer_list<const wchar_t*> labels,unsigned selected){
     SendDlgItemMessage(w,id,CB_RESETCONTENT,0,0);
     for(auto label:labels)SendDlgItemMessage(w,id,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(csp::tr(w,label)));
@@ -229,10 +229,17 @@ bool preset_file(HWND w,csp::Settings& s,bool writing,DialogState* dialog=nullpt
         if(!csp::decode_preset(bytes,s))throw std::runtime_error("Unsupported or truncated preset; the current settings are unchanged.");
     }return true;
 }
+void close_settings(HWND window,DialogState* state,INT_PTR result) noexcept {
+    // Focus restoration is optional. SettingsThread re-enables the host on exit
+    // even when the closing notification cannot reach the host thread.
+    try {if(state && state->closing)state->closing(window);}catch(...){}
+    EndDialog(window,result);
+}
 INT_PTR CALLBACK settings_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp){
     auto* state=reinterpret_cast<DialogState*>(GetWindowLongPtr(w,DWLP_USER));
     try{
         if(msg==WM_INITDIALOG){state=reinterpret_cast<DialogState*>(lp);SetWindowLongPtr(w,DWLP_USER,lp);csp::set_ui_language(w,state->language);csp::initialize_numeric_controls(w);populate(w,state->value);csp::initialize_settings_tabs(w);state->heading_font.initialize(w);combo(w,IDC_LANGUAGE,{L"English",L"简体中文",L"日本語"},state->language<3?state->language:0);refresh_interface_language(w,*state);if(state->monitor_events)state->monitor_events->attach_dialog(w);if(state->monitor_fallback && state->monitor_events)state->monitor_events->set_polling_active(SetTimer(w,3,5000,nullptr)!=0);update_monitor_label(w,*state);if(state->initialized)state->initialized(w);return TRUE;}
+        if(msg==WM_CLOSE){close_settings(w,state,IDCANCEL);return TRUE;}
         if(msg==WM_HSCROLL){const int id=GetDlgCtrlID(reinterpret_cast<HWND>(lp));
             if(id==IDC_FALL_SLIDER || id==IDC_BLUR_SLIDER){SetDlgItemInt(w,id==IDC_FALL_SLIDER?IDC_FALL:IDC_BLUR,unsigned(SendMessage(reinterpret_cast<HWND>(lp),TBM_GETPOS,0,0)),FALSE);return TRUE;}
         }
@@ -276,12 +283,12 @@ INT_PTR CALLBACK settings_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp){
             if(id==IDC_FG_ADVANCED || id==IDC_BG_ADVANCED){csp::edit_palette(w,id==IDC_FG_ADVANCED?IDC_FGCOLORS:IDC_BGCOLORS);return TRUE;}
             if(HIWORD(wp)==BN_CLICKED || ((id==IDC_CHANNELMODE || id==IDC_STYLE) && HIWORD(wp)==CBN_SELCHANGE))csp::update_setting_dependencies(w);
             if(id==IDC_RESET){auto next=csp::Settings{};state->value.interval=next.interval;state->value.fps_milli=next.fps_milli;populate(w,next);return TRUE;}
-            if(id==IDCANCEL){EndDialog(w,IDCANCEL);return TRUE;}
+            if(id==IDCANCEL){close_settings(w,state,IDCANCEL);return TRUE;}
             if(id==IDC_IMPORT){auto next=state->value;if(preset_file(w,next,false)){state->value.interval=next.interval;state->value.fps_milli=next.fps_milli;populate(w,next);}return TRUE;}
             if(id==IDOK || id==IDC_APPLY || id==IDC_EXPORT){auto next=state->value;
                 if(!read_settings(w,next)){MessageBox(w,csp::tr(w,L"Target FPS must be a whole number from 10 to 200. Choose a listed value or type a number for custom hold time / tick lengths. The invalid field is selected and enabled for correction. Check numeric ranges and RGB colors."),csp::tr(w,L"Invalid settings"),MB_OK|MB_ICONWARNING);return TRUE;}
                 if(id==IDC_EXPORT){if(!state->save)preset_file(w,next,true,state);return TRUE;}
-                state->apply(next);state->value=next;state->changed=true;if(id==IDOK)EndDialog(w,IDOK);return TRUE;
+                state->apply(next);state->value=next;state->changed=true;if(id==IDOK)close_settings(w,state,IDOK);return TRUE;
             }
         }
     }catch(const std::exception& e){csp::show_localized_error(w,e.what(),L"Channel Spectrum Panel");return TRUE;}

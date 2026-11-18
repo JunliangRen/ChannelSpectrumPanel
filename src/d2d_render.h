@@ -1,7 +1,11 @@
 #pragma once
 #include <d2d1.h>
+#include <dwrite.h>
+#include <dxgi.h>
+#pragma comment(lib,"dwrite.lib")
 #include <wrl/client.h>
 #include "render.h"
+#include "rendered_fps.h"
 #pragma comment(lib,"d2d1.lib")
 namespace csp {
 using Microsoft::WRL::ComPtr;
@@ -144,6 +148,15 @@ struct D2DTargetOperations {
         return factory->CreateHwndRenderTarget(properties,D2D1::HwndRenderTargetProperties(window,D2D1::SizeU(w,h),D2D1_PRESENT_OPTIONS_IMMEDIATELY),target);
     }
     virtual HRESULT resize(ID2D1HwndRenderTarget* target,D2D1_SIZE_U size) const noexcept {return target->Resize(size);}
+    virtual ULONGLONG overlay_time_ms() const noexcept {return GetTickCount64();}
+    virtual HRESULT create_fps_format(IDWriteTextFormat** out) const noexcept {
+        ComPtr<IDWriteFactory> factory;
+        auto hr=DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,__uuidof(IDWriteFactory),
+            reinterpret_cast<IUnknown**>(factory.GetAddressOf()));
+        if(FAILED(hr))return hr;
+        return factory->CreateTextFormat(L"Segoe UI",nullptr,DWRITE_FONT_WEIGHT_NORMAL,DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL,float(fps_font_pixels),L"",out);
+    }
     virtual HRESULT end_draw(ID2D1HwndRenderTarget* target) const noexcept {return target->EndDraw();}
     static const D2DTargetOperations& system() noexcept {static const D2DTargetOperations operations;return operations;}
 };
@@ -154,13 +167,14 @@ public:
     D2DRenderer(const D2DRenderer&)=delete;
     D2DRenderer& operator=(const D2DRenderer&)=delete;
     bool active() const noexcept {return target_!=nullptr;}
-    template<class Fallback> bool draw_or_fallback(HWND window,int w,int h,const std::vector<Bar>& bars,std::span<const Tick> ticks,const Settings& s,Fallback&& fallback){
-        if(draw(window,w,h,bars,ticks,s))return true;
+    template<class Fallback> bool draw_or_fallback(HWND window,int w,int h,const std::vector<Bar>& bars,std::span<const Tick> ticks,const Settings& s,Fallback&& fallback,const wchar_t* fps=nullptr){
+        if(draw(window,w,h,bars,ticks,s,fps))return true;
         fallback();return false;
     }
-    void reset() noexcept {scene_.clear();target_.Reset();factory_.Reset();failed_=false;}
+    void retry_overlay() noexcept {overlay_retry_at_=0;}
+    void reset() noexcept {retry_overlay();overlay_brush_.Reset();scene_.clear();target_.Reset();factory_.Reset();failed_=false;}
     bool failed() const noexcept {return failed_;}
-    bool draw(HWND window,int w,int h,const std::vector<Bar>& bars,std::span<const Tick> ticks,const Settings& s) noexcept {
+    bool draw(HWND window,int w,int h,const std::vector<Bar>& bars,std::span<const Tick> ticks,const Settings& s,const wchar_t* fps=nullptr) noexcept {
         if(!s.direct2d || !d2d_supported(s) || failed_ || w<1 || h<1)return false;
         try {
             if(!factory_ && FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,factory_.GetAddressOf())))return fail();
@@ -168,13 +182,55 @@ public:
                 auto hr=operations_.create(factory_.Get(),window,w,h,target_.GetAddressOf());
                 if(FAILED(hr))return fail();
             }else {auto size=target_->GetPixelSize();if((size.width!=unsigned(w) || size.height!=unsigned(h)) && FAILED(operations_.resize(target_.Get(),D2D1::SizeU(w,h))))return fail();}
+            bool overlay_ready=false;
+            if(fps && fps_fits(w,h) && (!overlay_retry_at_ || operations_.overlay_time_ms()>=overlay_retry_at_)){
+                const HRESULT hr=prepare_fps();
+                if(FAILED(hr)){
+                    if(hr==D2DERR_RECREATE_TARGET || hr==DXGI_ERROR_DEVICE_REMOVED ||
+                        hr==DXGI_ERROR_DEVICE_RESET || hr==DXGI_ERROR_DEVICE_HUNG)return fail();
+                    // Keep painting the spectrum. Retry optional text on a later frame.
+                    overlay_retry_at_=operations_.overlay_time_ms()+1000;
+                }else{
+                    overlay_retry_at_=0;
+                    overlay_ready=true;
+                }
+            }
             // Logical coordinates remain physical pixels, matching the existing Engine.
             target_->SetTransform(d2d_transform(s.rotation,w,h));target_->BeginDraw();
             auto hr=scene_.draw(target_.Get(),s.rotation&1?h:w,s.rotation&1?w:h,bars,ticks,s);
+            if(SUCCEEDED(hr) && overlay_ready)draw_fps(w,h,fps);
             auto end=operations_.end_draw(target_.Get());if(FAILED(hr) || FAILED(end))return fail();return true;
         }catch(...){return fail();}
     }
 private:
+    HRESULT prepare_fps() noexcept {
+        if(!text_format_){
+            ComPtr<IDWriteTextFormat> format;
+            auto hr=operations_.create_fps_format(format.GetAddressOf());
+            if(FAILED(hr))return hr;
+            hr=format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+            if(FAILED(hr))return hr;
+            hr=format->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+            if(FAILED(hr))return hr;
+            text_format_=std::move(format);
+        }
+        if(!overlay_brush_){
+            auto hr=target_->CreateSolidColorBrush(d2d_color(0),overlay_brush_.GetAddressOf());
+            if(FAILED(hr))return hr;
+        }
+        return S_OK;
+    }
+    void draw_fps(int w,int h,const wchar_t* label) noexcept {
+        target_->SetTransform(D2D1::Matrix3x2F::Identity());
+        const auto box=D2D1::RectF(float(w-fps_box_width),2.f,float(w-2),float(2+fps_box_height));
+        overlay_brush_->SetColor(d2d_color(0x202020));target_->FillRectangle(box,overlay_brush_.Get());
+        overlay_brush_->SetColor(d2d_color(0xffffff));
+        auto text=box;text.right-=3;text.top+=1;
+        target_->DrawText(label,UINT32(wcslen(label)),text_format_.Get(),text,overlay_brush_.Get(),D2D1_DRAW_TEXT_OPTIONS_CLIP);
+    }
+    ULONGLONG overlay_retry_at_=0;
+    ComPtr<IDWriteTextFormat> text_format_;
+    ComPtr<ID2D1SolidColorBrush> overlay_brush_;
     bool fail() noexcept {reset();failed_=true;return false;} // Retry on Apply or window recreation, never every frame.
     const D2DTargetOperations& operations_;
     ComPtr<ID2D1Factory> factory_;ComPtr<ID2D1HwndRenderTarget> target_;D2DScene scene_;bool failed_=false;

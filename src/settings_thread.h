@@ -1,5 +1,6 @@
 #pragma once
 #include "settings_ui.h"
+#include "settings_focus.h"
 #include <process.h>
 #include <exception>
 #include <stdexcept>
@@ -19,6 +20,7 @@ class SettingsThread {
         HANDLE done=CreateEventW(nullptr,TRUE,FALSE,nullptr);
         Call()=default;Call(const Call&)=delete;Call& operator=(const Call&)=delete;
         ~Call(){if(done)CloseHandle(done);}
+        HWND closing_dialog=nullptr;
         const csp::Settings* settings=nullptr;
         unsigned language=0;
         bool completed=false;
@@ -31,12 +33,14 @@ class SettingsThread {
         std::exception_ptr error;
         std::function<void(HWND)> initialized;
     };
+    struct BridgeContext {DialogState& state;csp::SettingsModalOwner& owner;};
     static LRESULT CALLBACK bridge_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp,UINT_PTR id,DWORD_PTR data) noexcept {
         if(msg==WM_NCDESTROY)RemoveWindowSubclass(w,bridge_proc,id);
         if(msg==invoke_message){
-            auto& state=*reinterpret_cast<DialogState*>(data);
+            auto& context=*reinterpret_cast<BridgeContext*>(data);
+            auto& state=context.state;
             auto& call=*reinterpret_cast<Call*>(lp);
-            try {if(call.settings)state.apply(*call.settings);else if(state.save_language)state.save_language(call.language);}
+            try {if(call.closing_dialog)context.owner.closing(call.closing_dialog);else if(call.settings)state.apply(*call.settings);else if(state.save_language)state.save_language(call.language);}
             catch(...){call.error=std::current_exception();}
             call.completed=true;SetEvent(call.done);return 1;
         }
@@ -74,6 +78,7 @@ class SettingsThread {
             if(!owner)throw std::runtime_error("Could not create settings owner.");
             {
                 DialogState dialog{job.settings,[&](const csp::Settings& next){Call call;call.settings=&next;invoke(job.bridge,call);}};
+                dialog.closing=[&](HWND w){Call call;call.closing_dialog=w;invoke(job.bridge,call);};
                 dialog.language=job.language;
                 dialog.save_language=[&](unsigned language){Call call;call.language=language;invoke(job.bridge,call);};
                 dialog.monitor_events=std::make_shared<csp::MonitorEvents>(job.bridge);
@@ -104,14 +109,17 @@ class SettingsThread {
     }
 public:
     using Launch=decltype(&_beginthreadex);
-    static bool run(HINSTANCE instance,HWND panel,DialogState& state,std::function<void(HWND)> initialized={},HWND monitorTarget=nullptr,Launch launch=&_beginthreadex){
+    static bool run(HINSTANCE instance,HWND panel,DialogState& state,std::function<void(HWND)> initialized={},HWND monitorTarget=nullptr,Launch launch=&_beginthreadex,const csp::SettingsFocusApi* focusApi=nullptr){
         if(!monitorTarget)monitorTarget=panel;
         HWND root=GetAncestor(panel,GA_ROOT);
         RECT position{};if(!GetWindowRect(root?root:panel,&position))SystemParametersInfo(SPI_GETWORKAREA,0,&position,0);
+        static const csp::SettingsFocusApi nativeFocus;
+        csp::SettingsModalOwner modalOwner(root,focusApi?*focusApi:nativeFocus);
+        BridgeContext context{state,modalOwner};
         HWND bridge=CreateWindowEx(0,L"STATIC",L"",0,0,0,0,0,HWND_MESSAGE,nullptr,instance,nullptr);
         if(!bridge)throw std::runtime_error("Could not create settings dispatcher.");
         struct BridgeCleanup{HWND window;~BridgeCleanup(){DestroyWindow(window);}} bridgeCleanup{bridge};
-        if(!SetWindowSubclass(bridge,bridge_proc,1,reinterpret_cast<DWORD_PTR>(&state)))throw std::runtime_error("Could not initialize settings dispatcher.");
+        if(!SetWindowSubclass(bridge,bridge_proc,1,reinterpret_cast<DWORD_PTR>(&context)))throw std::runtime_error("Could not initialize settings dispatcher.");
         struct PanelMarker {
             HWND panel;HANDLE token;
             PanelMarker(HWND w,HANDLE value):panel(w),token(value){
@@ -119,18 +127,6 @@ public:
             }
             ~PanelMarker(){if(GetProp(panel,csp::MonitorEvents::identity_property)==token)RemoveProp(panel,csp::MonitorEvents::identity_property);}
         } panelMarker(monitorTarget,bridge);
-        // A property distinguishes this HWND from a later reused handle. Nested
-        // settings runs only restore the root if this run actually disabled it.
-        struct ModalOwner {
-            HWND window;bool restore=false;
-            explicit ModalOwner(HWND w):window(w){
-                if(w && IsWindowEnabled(w)){
-                    if(!SetProp(w,L"CspSettingsModalOwner",this))throw std::runtime_error("Could not disable settings owner safely.");
-                    restore=true;EnableWindow(w,FALSE);
-                }
-            }
-            ~ModalOwner(){if(restore && GetProp(window,L"CspSettingsModalOwner")==this){RemoveProp(window,L"CspSettingsModalOwner");EnableWindow(window,TRUE);SetActiveWindow(window);}}
-        } modalOwner(root);
         Job job{instance,bridge,monitorTarget,position,dpi_context(),state.value,state.language,false,{},std::move(initialized)};
         unsigned threadId=0;
         HANDLE thread=reinterpret_cast<HANDLE>(launch(nullptr,0,entry,&job,0,&threadId));
